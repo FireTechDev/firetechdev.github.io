@@ -1,1 +1,101 @@
- 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRP - Message de Repérage Pompier</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="document.getElementById('clickSound').play()">
+            <div class="logo-image">
+                <img src="512.png" alt="Logo MRP">
+            </div>
+            <span>MRP</span>
+        </div>
+        <div class="nav-links">
+            <a href="#accueil">Accueil</a>
+            <a href="https://www.linkedin.com/in/taelpinault/" target="_blank">Contact</a>
+            <a href="https://firetechdev.github.io/MRP/" target="_blank">Lancer l'application</a>
+        </div>
+    </nav>
+
+    <section id="accueil" class="hero">
+        <div class="hero-content">
+            <h2>Message radio pompier</h2>
+            <p>MRP est votre assistant terrain pour la génération rapide de messages radio.</p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Génération de message facilitée</li>
+                <li><i class="fas fa-check"></i> Guidage pas à pas pour ne rien oublier</li>
+                <li><i class="fas fa-check"></i> Fonctionnement hors ligne</li>
+                <li><i class="fas fa-check"></i> 100% gratuite</li>
+            </ul>
+            <a href="#installation" class="cta-button" onclick="event.preventDefault(); document.getElementById('installation').scrollIntoView({behavior: 'smooth'});">Installer l'application</a>
+        </div>
+        <div class="hero-image">
+            <div class="phone-mockup">
+                <img src="App.png" alt="Application MRP" class="app-screen">
+            </div>
+        </div>
+    </section>
+
+    <section id="fonctionnalites" class="features">
+        <div class="feature-section">
+            <div class="feature-content">
+                <h2>Une appli pour les messages radio… pour quoi faire ?</h2>
+                <p>Les exigences sont de plus en plus nombreuses et importantes. Notre application vous guide pas à pas pour vous assurer de ne rien oublier, même en situation de stress. Avec MRP, vous transmettez toutes les informations essentielles dans le bon ordre, en toute sérénité.</p>
+            </div>
+            <div class="feature-image">
+                <img src="321.png" alt="Interface MRP" class="feature-img">
+            </div>
+        </div>
+
+        <div class="feature-section" id="installation" style="padding: 2rem 5%;">
+            <div class="feature-content" style="width: 100%; max-width: 800px; margin: 0 auto;">
+                <h2 style="text-align: center; margin-bottom: 2rem;">Installation de l'application</h2>
+                <p style="text-align: center; margin-bottom: 2rem;">MRP est une application web qui peut être installée directement sur votre téléphone, comme une application normale. Voici comment faire, étape par étape :</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="installation-step">
+                        <h3 style="color: #4f46e5; margin-bottom: 1rem;">Étape 1 : Lancer l'application depuis votre navigateur</h3>
+                        <div style="text-align: center; margin-top: 1rem;">
+                            <a href="https://firetechdev.github.io/MRP/" target="_blank" class="cta-button" style="display: inline-block; padding: 0.75rem 1.5rem; font-size: 0.9rem;">Lancer l'application</a>
+                        </div>
+                    </div>
+
+                    <div class="installation-step">
+                        <h3 style="color: #4f46e5; margin-bottom: 1rem;">Étape 2 : Installez l'application</h3>
+                        
+                        <h4 style="margin: 1rem 0 0.5rem 0;">Sur iPhone (iOS)</h4>
+                        <div style="max-width: 600px; margin: 0 auto; text-align: left;">
+                            <p style="margin-bottom: 0.5rem;">• Touchez l'icône de partage <img src="share_icon.svg" alt="iOS share icon" style="height: 20px; vertical-align: middle;"></p>
+                            <p style="margin-bottom: 0.5rem;">• Faites défiler et touchez « Sur l'écran d'accueil » <img src="plus_square_icon.svg" alt="iOS plus square icon" style="height: 20px; vertical-align: middle;"></p>
+                            <p style="margin-bottom: 0.5rem;">• Touchez « Ajouter » en haut à droite</p>
+                        </div>
+
+                        <h4 style="margin: 1rem 0 0.5rem 0;">Sur Android</h4>
+                        <div style="max-width: 600px; margin: 0 auto; text-align: left;">
+                            <p style="margin-bottom: 0.5rem;">• Touchez les trois points (⋮) en haut à droite du navigateur</p>
+                            <p style="margin-bottom: 0.5rem;">• Sélectionnez « Installer l'application » ou « Ajouter à l'écran d'accueil »</p>
+                            <p style="margin-bottom: 0.5rem;">• Confirmez en touchant « Installer »</p>
+                        </div>
+                    </div>
+                </div>
+
+                <p style="text-align: center; margin-top: 2rem; padding: 1rem; background-color: #f3f4f6; border-radius: 8px; font-size: 0.95rem;">
+                    L'application sera maintenant accessible depuis votre écran d'accueil, comme une app classique.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 MRP - créé par Tael PINAULT - Tous droits réservés</p>
+    </footer>
+
+    <audio id="clickSound" src="balise.mp3" preload="auto"></audio>
+    <script src="script.js"></script>
+</body>
+</html> 
