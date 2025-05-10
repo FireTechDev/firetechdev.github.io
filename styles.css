@@ -500,14 +500,16 @@ footer {
 
     .feature-image {
         width: 100%;
-        max-width: 400px;
+        max-width: 500px;
         margin: 0 auto;
+        padding: 0 1rem;
     }
 
     .feature-img {
         width: 100%;
         height: auto;
         border-radius: 12px;
+        object-fit: contain;
     }
 
     .cta-button {
@@ -546,7 +548,13 @@ footer {
     }
 
     .feature-image {
-        max-width: 320px;
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .feature-img {
+        width: 100%;
+        max-width: none;
     }
 
     .cta-button {
