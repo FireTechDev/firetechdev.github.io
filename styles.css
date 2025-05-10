@@ -496,7 +496,9 @@ footer {
     }
 
     .cta-button {
-        margin-top: 1.5rem;
+        margin-top: 1rem;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
     }
 }
 
@@ -533,6 +535,7 @@ footer {
     }
 
     .cta-button {
+        margin-top: 0.75rem;
         padding: 0.9rem 1.8rem;
         font-size: 1rem;
     }
