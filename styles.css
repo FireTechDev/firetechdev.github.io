@@ -100,7 +100,7 @@ nav {
 .hero h1 {
     font-size: 4rem;
     margin-bottom: 1rem;
-    animation: fadeInLeft 1s ease;
+    animation: elegantFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -110,7 +110,7 @@ nav {
 .hero h2 {
     font-size: 2.5rem;
     margin-bottom: 1.5rem;
-    animation: fadeInLeft 1s ease 0.2s;
+    animation: elegantFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -120,7 +120,7 @@ nav {
 .hero p {
     font-size: 1.2rem;
     margin-bottom: 2rem;
-    animation: fadeInLeft 1s ease 0.4s;
+    animation: elegantFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.4s;
 }
 
 .hero-image {
@@ -246,7 +246,7 @@ nav {
     display: flex;
     align-items: center;
     gap: 1rem;
-    animation: fadeInLeft 1s ease;
+    animation: elegantFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1);
     animation-fill-mode: both;
 }
 
@@ -337,6 +337,8 @@ nav {
     box-shadow: 0 4px 15px rgba(252, 92, 125, 0.2);
     text-decoration: none;
     display: inline-block;
+    animation: elegantFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) 1s;
+    animation-fill-mode: both;
 }
 
 .cta-button:hover {
@@ -359,14 +361,21 @@ footer {
 }
 
 /* Animations */
-@keyframes fadeInLeft {
-    from {
+@keyframes elegantFadeIn {
+    0% {
         opacity: 0;
-        transform: translateX(-30px);
+        transform: translateX(-40px) scale(0.95);
     }
-    to {
+    60% {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(5px) scale(1.02);
+    }
+    80% {
+        transform: translateX(-2px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
     }
 }
 
