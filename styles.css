@@ -381,7 +381,7 @@ footer {
 /* Responsive Design */
 @media (max-width: 768px) {
     nav {
-        padding: 0.8rem 5%;
+        padding: 1rem 5%;
     }
 
     .logo {
@@ -389,16 +389,14 @@ footer {
     }
 
     .logo-image {
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
     }
 
     .hero {
         flex-direction: column;
-        text-align: center;
-        padding: 5rem 5% 2rem;
+        padding: 6rem 5% 2rem 5%;
         min-height: auto;
-        gap: 1.5rem;
     }
 
     .hero-content {
