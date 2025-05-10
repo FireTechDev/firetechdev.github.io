@@ -6,6 +6,26 @@
     <title>MRP - Message de Repérage Pompier</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @keyframes slideInRight {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .phone-mockup {
+            will-change: transform, opacity;
+            animation: slideInRight 1.5s ease-out forwards;
+            animation-delay: 0.3s;
+            opacity: 0;
+            transform: translateX(100%);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -35,7 +55,7 @@
             <a href="#installation" class="cta-button" onclick="event.preventDefault(); document.getElementById('installation').scrollIntoView({behavior: 'smooth'});" style="margin-bottom: 1rem !important; display: inline-block;">Installer l'application</a>
         </div>
         <div class="hero-image" style="margin-top: 1rem !important; padding-top: 1rem !important;">
-            <div class="phone-mockup">
+            <div class="phone-mockup" style="padding: 8px; background: #2a2a2a; border: 1px solid #2a2a2a;">
                 <img src="App.png" alt="Application MRP" class="app-screen">
             </div>
         </div>

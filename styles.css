@@ -132,7 +132,6 @@ nav {
     display: flex;
     justify-content: center;
     align-items: center;
-    animation: float 6s ease-in-out infinite;
     max-width: 50%;
 }
 
