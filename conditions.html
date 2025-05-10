@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conditions d'utilisation - MRP</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .conditions-content {
+            max-width: 800px;
+            margin: 120px auto 40px;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .conditions-content h1 {
+            color: #4f46e5;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .conditions-content h2 {
+            color: #4f46e5;
+            margin: 2rem 0 1rem;
+        }
+        .conditions-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: #4f46e5;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="document.getElementById('clickSound').play()">
+            <div class="logo-image">
+                <img src="512.png" alt="Logo MRP">
+            </div>
+            <span>MRP</span>
+        </div>
+        <div class="nav-links">
+            <a href="https://firetechdev.github.io/MRP/" target="_blank">Lancer l'application</a>
+        </div>
+    </nav>
+
+    <div class="conditions-content">
+        <h1>Conditions d'utilisation</h1>
+        
+        <h2>1. Acceptation des conditions</h2>
+        <p>En utilisant l'application MRP (Message radio pompier), vous acceptez d'être lié par les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser l'application.</p>
+
+        <h2>2. Utilisation de l'application</h2>
+        <p>MRP est une application gratuite destinée à faciliter la génération de messages radio pour les pompiers. L'application est fournie "telle quelle", sans garantie d'aucune sorte.</p>
+
+        <h2>3. Responsabilité</h2>
+        <p>L'application MRP est un outil d'aide à la décision. L'utilisateur reste responsable de l'utilisation des messages générés et de leur conformité avec les procédures en vigueur.</p>
+
+        <h2>4. Confidentialité</h2>
+        <p>L'application MRP ne collecte aucune donnée personnelle. Toutes les informations saisies restent locales sur votre appareil.</p>
+
+        <h2>5. Modifications</h2>
+        <p>Nous nous réservons le droit de modifier ces conditions d'utilisation à tout moment. Les modifications prendront effet dès leur publication sur l'application.</p>
+
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 MRP - créé par Tael PINAULT - <a href="https://www.linkedin.com/in/taelpinault/" target="_blank" style="color: white; text-decoration: none;">Contact</a> - <a href="conditions.html" style="color: white; text-decoration: none;">Conditions d'utilisation</a></p>
+    </footer>
+
+    <audio id="clickSound" src="balise.mp3" preload="auto"></audio>
+    <script src="script.js"></script>
+</body>
+</html> 
