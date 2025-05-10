@@ -497,6 +497,11 @@ footer {
         margin: 0 auto;
     }
 
+    .phone-mockup::before {
+        width: 100px;
+        height: 20px;
+    }
+
     .feature-image {
         width: 100%;
         max-width: 500px;
@@ -544,6 +549,11 @@ footer {
     .phone-mockup {
         width: 180px;
         height: 360px;
+    }
+
+    .phone-mockup::before {
+        width: 80px;
+        height: 18px;
     }
 
     .feature-image {
