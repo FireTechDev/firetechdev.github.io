@@ -7,6 +7,15 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        body {
+            background: linear-gradient(135deg, #f8f7ff 0%, #f0edff 100%);
+        }
         .conditions-content {
             max-width: 800px;
             margin: 120px auto 40px;
@@ -14,6 +23,7 @@
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex: 1;
         }
         .conditions-content h1 {
             color: #4f46e5;
