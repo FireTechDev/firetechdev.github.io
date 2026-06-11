@@ -1,13 +1,47 @@
-function toneLabel(status) {
-  if (status === "critical") {
-    return "Alerte";
-  }
+const FIREFIGHTER_STATUS_CLASS = {
+  GARDE: "status-pill--garde",
+  ASTREINTE: "status-pill--astreinte",
+  D1: "status-pill--d1",
+  D2: "status-pill--d2",
+  INTER: "status-pill--inter"
+};
 
-  if (status === "warning") {
-    return "Sous tension";
-  }
+function initialsFromName(name) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
+}
 
-  return "Stable";
+function formatMetricCards(center) {
+  return [
+    {
+      label: "Pompiers disponibles",
+      value: center.summary.availableFirefighters,
+      tone: "success",
+      detail: "Personnel mobilisable maintenant"
+    },
+    {
+      label: "Engins armables",
+      value: center.summary.armableVehicles,
+      tone: "calm",
+      detail: "Vehicules pouvant partir"
+    },
+    {
+      label: "Interventions actuelles",
+      value: center.summary.currentInterventions,
+      tone: "warning",
+      detail: "Depart(s) en cours sur le secteur"
+    },
+    {
+      label: "Interventions sur 24 h",
+      value: center.summary.last24hInterventions,
+      tone: "alert",
+      detail: "Activite recente du centre"
+    }
+  ];
 }
 
 export function renderDashboardView(state) {
@@ -17,77 +51,126 @@ export function renderDashboardView(state) {
     return `
       <section class="screen-block">
         <div class="panel skeleton-panel">
-          <p class="eyebrow">Cartes / Synoptiques</p>
-          <h2>Chargement de la lecture terrain...</h2>
+          <p class="eyebrow">Statut operationnel</p>
+          <h2>Chargement de la disponibilite du centre...</h2>
         </div>
       </section>
     `;
   }
 
-  const query = state.centerSearch.trim().toLowerCase();
-  const filter = state.centerFilter;
-  const centers = dashboard.centers.filter((center) => {
-    const matchesName =
-      !query ||
-      center.name.toLowerCase().includes(query) ||
-      center.note.toLowerCase().includes(query);
-
-    if (!matchesName) {
-      return false;
-    }
-
-    if (filter === "all") {
-      return true;
-    }
-
-    return center.status === filter;
-  });
+  const centers = dashboard.centers;
+  const selectedCenter =
+    centers.find((center) => center.id === state.selectedCenterId) ||
+    centers.find((center) => center.id === dashboard.defaultCenterId) ||
+    centers[0];
+  const metrics = formatMetricCards(selectedCenter);
+  const currentOperations = selectedCenter.currentOperations.length
+    ? selectedCenter.currentOperations
+    : [
+        {
+          title: "Aucune intervention en cours",
+          since: "Centre disponible",
+          vehicle: "Veille simple"
+        }
+      ];
 
   return `
     <section class="screen-block">
-      <div class="hero-card">
+      <div class="hero-card hero-card--ops">
         <div class="hero-card__header">
           <div>
             <p class="eyebrow">${dashboard.profile.territory}</p>
             <h2>${dashboard.profile.focusLabel}</h2>
           </div>
-          <span class="badge badge--strong">${dashboard.profile.role}</span>
+          <button class="button button--ghost" data-action="refresh">
+            Rafraichir
+          </button>
         </div>
 
-        <div class="stats-grid">
-          ${dashboard.summary
-            .map(
-              (item) => `
-                <article class="stat-card stat-card--${item.tone}">
-                  <span>${item.label}</span>
-                  <strong>${item.value}</strong>
-                </article>
-              `
-            )
-            .join("")}
+        <div class="ops-toolbar">
+          <label class="field field--select">
+            <span>Centre de secours</span>
+            <select data-field="selected-center" aria-label="Centre de secours">
+              ${centers
+                .map(
+                  (center) => `
+                    <option value="${center.id}" ${
+                      center.id === selectedCenter.id ? "selected" : ""
+                    }>
+                      ${center.name}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
+          </label>
+
+          <div class="ops-meta">
+            <span class="badge badge--strong">${selectedCenter.stationLabel}</span>
+            <span class="badge badge--soft">Maj ${selectedCenter.updatedAt}</span>
+          </div>
         </div>
+
+        <p class="hero-note">${selectedCenter.note}</p>
+      </div>
+    </section>
+
+    <section class="screen-block">
+      <div class="stats-grid stats-grid--ops">
+        ${metrics
+          .map(
+            (item) => `
+              <article class="stat-card stat-card--${item.tone}">
+                <span>${item.label}</span>
+                <strong>${item.value}</strong>
+                <small>${item.detail}</small>
+              </article>
+            `
+          )
+          .join("")}
       </div>
     </section>
 
     <section class="screen-block">
       <div class="panel panel--dense">
-        <div class="panel__header panel__header--row">
+        <div class="panel__header">
           <div>
-            <p class="eyebrow">Lecture rapide</p>
-            <h3>Ce qu'il faut voir maintenant</h3>
+            <p class="eyebrow">Disponibilite detaillee</p>
+            <h3>${selectedCenter.summary.availableFirefighters} pompiers mobilisables</h3>
           </div>
-          <button class="button button--ghost" data-action="refresh">
-            Rafraichir
-          </button>
+          <span class="badge badge--soft">${dashboard.profile.role}</span>
         </div>
-        <div class="insight-list">
-          ${dashboard.operationHighlights
+
+        <div class="availability-grid">
+          ${selectedCenter.availability
             .map(
               (item) => `
-                <article class="insight-item">
+                <article class="availability-chip availability-chip--${item.key}">
                   <span>${item.label}</span>
-                  <strong>${item.value}</strong>
-                  <p>${item.detail}</p>
+                  <strong>${item.count}</strong>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+
+        <div class="panel__header">
+          <div>
+            <p class="eyebrow">Interventions actuelles</p>
+            <h3>Ce qui engage le centre maintenant</h3>
+          </div>
+        </div>
+
+        <div class="ops-list">
+          ${currentOperations
+            .map(
+              (operation) => `
+                <article class="ops-list__item">
+                  <div>
+                    <strong>${operation.title}</strong>
+                    <p>${operation.since}</p>
+                  </div>
+                  <span class="badge badge--soft">${operation.vehicle}</span>
                 </article>
               `
             )
@@ -99,64 +182,61 @@ export function renderDashboardView(state) {
     <section class="screen-block">
       <div class="panel">
         <div class="panel__header">
-          <p class="eyebrow">Centres</p>
-          <h3>Vue mobile priorisee</h3>
+          <div>
+            <p class="eyebrow">Qui est disponible</p>
+            <h3>Lecture claire du personnel</h3>
+          </div>
         </div>
 
-        <label class="search-field">
-          <span>Recherche</span>
-          <input
-            data-field="center-search"
-            type="search"
-            placeholder="Nom d'un centre ou mot cle"
-            value="${state.centerSearch}"
-          />
-        </label>
+        <div class="crew-list">
+          ${selectedCenter.firefighters
+            .map(
+              (firefighter) => `
+                <article class="firefighter-card">
+                  <div class="firefighter-card__identity">
+                    <span class="initials">${initialsFromName(firefighter.name)}</span>
+                    <div>
+                      <p class="firefighter-card__rank">${firefighter.rank}</p>
+                      <h4>${firefighter.name}</h4>
+                      <p>${firefighter.detail}</p>
+                    </div>
+                  </div>
+                  <span class="status-pill ${
+                    FIREFIGHTER_STATUS_CLASS[firefighter.status] || "status-pill--d1"
+                  }">${firefighter.status}</span>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      </div>
+    </section>
 
-        <div class="filter-row" role="tablist" aria-label="Filtres centres">
-          <button class="pill ${filter === "all" ? "pill--active" : ""}" data-status-filter="all">
-            Tous
-          </button>
-          <button class="pill ${filter === "critical" ? "pill--active" : ""}" data-status-filter="critical">
-            Alertes
-          </button>
-          <button class="pill ${filter === "warning" ? "pill--active" : ""}" data-status-filter="warning">
-            Sous tension
-          </button>
-          <button class="pill ${filter === "good" ? "pill--active" : ""}" data-status-filter="good">
-            Stables
-          </button>
+    <section class="screen-block">
+      <div class="panel panel--dense">
+        <div class="panel__header">
+          <div>
+            <p class="eyebrow">Engins</p>
+            <h3>Ce qui peut partir proprement</h3>
+          </div>
         </div>
 
-        <div class="list-stack">
-          ${
-            centers.length
-              ? centers
-                  .map(
-                    (center) => `
-                      <article class="center-card center-card--${center.status}">
-                        <div class="center-card__title">
-                          <div>
-                            <h4>${center.name}</h4>
-                            <p>${center.note}</p>
-                          </div>
-                          <span class="badge badge--status badge--${center.status}">
-                            ${toneLabel(center.status)}
-                          </span>
-                        </div>
-                        <div class="center-card__meta">
-                          <span>Disponibilite ${center.readiness}%</span>
-                          <span>Equipage ${center.crew}</span>
-                        </div>
-                        <div class="progress">
-                          <span style="width: ${center.readiness}%"></span>
-                        </div>
-                      </article>
-                    `
-                  )
-                  .join("")
-              : `<p class="empty-state">Aucun centre ne correspond a ce filtre.</p>`
-          }
+        <div class="vehicle-list">
+          ${selectedCenter.vehicles
+            .map(
+              (vehicle) => `
+                <article class="vehicle-card">
+                  <div>
+                    <strong>${vehicle.name}</strong>
+                    <p>${vehicle.detail}</p>
+                  </div>
+                  <span class="status-pill ${
+                    vehicle.status === "Armable" ? "status-pill--ready" : "status-pill--watch"
+                  }">${vehicle.status}</span>
+                </article>
+              `
+            )
+            .join("")}
         </div>
       </div>
     </section>

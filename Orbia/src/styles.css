@@ -40,7 +40,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -179,6 +180,10 @@ button {
   padding-bottom: 1.2rem;
 }
 
+.hero-card--ops {
+  padding-bottom: 1.15rem;
+}
+
 .hero-card__header,
 .panel__header,
 .panel__header--row,
@@ -283,6 +288,10 @@ button {
   gap: 0.75rem;
 }
 
+.stats-grid--ops {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .stat-card {
   min-height: 5.8rem;
   padding: 0.9rem;
@@ -305,6 +314,12 @@ button {
   letter-spacing: -0.05em;
 }
 
+.stat-card small {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
 .stat-card--alert {
   background: linear-gradient(180deg, rgba(199, 70, 70, 0.12), rgba(255, 255, 255, 0.76));
 }
@@ -315,6 +330,10 @@ button {
 
 .stat-card--success {
   background: linear-gradient(180deg, rgba(45, 125, 70, 0.12), rgba(255, 255, 255, 0.76));
+}
+
+.stat-card--warning {
+  background: linear-gradient(180deg, rgba(197, 123, 28, 0.12), rgba(255, 255, 255, 0.76));
 }
 
 .stat-card--neutral {
@@ -378,7 +397,8 @@ button {
 }
 
 .field input,
-.search-field input {
+.search-field input,
+.field select {
   width: 100%;
   min-height: 3.15rem;
   padding: 0.85rem 1rem;
@@ -389,9 +409,214 @@ button {
 }
 
 .field input:focus,
-.search-field input:focus {
+.search-field input:focus,
+.field select:focus {
   outline: 2px solid rgba(241, 92, 44, 0.2);
   border-color: rgba(241, 92, 44, 0.55);
+}
+
+.field--select select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(16, 33, 43, 0.56) 50%),
+    linear-gradient(135deg, rgba(16, 33, 43, 0.56) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.25rem) calc(50% - 0.12rem),
+    calc(100% - 0.9rem) calc(50% - 0.12rem);
+  background-size: 0.4rem 0.4rem, 0.4rem 0.4rem;
+  background-repeat: no-repeat;
+  padding-right: 3rem;
+}
+
+.ops-toolbar {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.ops-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hero-note {
+  margin: 0.85rem 0 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.availability-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.availability-chip {
+  padding: 0.85rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.availability-chip span {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+.availability-chip strong {
+  font-size: 1.25rem;
+  letter-spacing: -0.04em;
+}
+
+.availability-chip--garde {
+  border-color: rgba(44, 76, 221, 0.24);
+}
+
+.availability-chip--astreinte {
+  border-color: rgba(45, 125, 70, 0.24);
+}
+
+.availability-chip--d1 {
+  border-color: rgba(197, 123, 28, 0.3);
+}
+
+.availability-chip--d2 {
+  border-color: rgba(199, 70, 70, 0.24);
+}
+
+.availability-chip--inter {
+  border-color: rgba(13, 124, 113, 0.24);
+}
+
+.ops-list,
+.crew-list,
+.vehicle-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ops-list__item,
+.firefighter-card,
+.vehicle-card {
+  padding: 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+}
+
+.ops-list__item,
+.vehicle-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ops-list__item strong,
+.vehicle-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.ops-list__item p,
+.vehicle-card p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.firefighter-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.firefighter-card__identity {
+  display: flex;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.firefighter-card__identity h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.firefighter-card__identity p {
+  margin: 0.2rem 0 0;
+  color: var(--ink-soft);
+}
+
+.firefighter-card__rank {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.initials {
+  width: 2.8rem;
+  height: 2.8rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 33, 43, 0.08);
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.status-pill {
+  min-height: 2rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.status-pill--garde {
+  background: rgba(44, 76, 221, 0.1);
+  color: #2740b0;
+}
+
+.status-pill--astreinte {
+  background: rgba(45, 125, 70, 0.12);
+  color: #2d7d46;
+}
+
+.status-pill--d1 {
+  background: rgba(197, 123, 28, 0.14);
+  color: #a5650d;
+}
+
+.status-pill--d2 {
+  background: rgba(199, 70, 70, 0.12);
+  color: #b53a3a;
+}
+
+.status-pill--inter {
+  background: rgba(13, 124, 113, 0.12);
+  color: #0d7c71;
+}
+
+.status-pill--ready {
+  background: rgba(45, 125, 70, 0.12);
+  color: #2d7d46;
+}
+
+.status-pill--watch {
+  background: rgba(16, 33, 43, 0.08);
+  color: var(--ink);
 }
 
 .filter-row {
@@ -671,11 +896,25 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .stats-grid--ops {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .topbar {
     flex-direction: column;
   }
 
   .topbar__actions {
     justify-content: flex-start;
+  }
+
+  .availability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ops-list__item,
+  .firefighter-card,
+  .vehicle-card {
+    flex-direction: column;
   }
 }

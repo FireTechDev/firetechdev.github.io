@@ -6,17 +6,27 @@ import { createStore } from "./store.js";
 const root = document.querySelector("#app");
 const { gateway, mode } = createOrbeGateway();
 
+function getPreviewSession() {
+  return {
+    displayName: "Tael PINAULT",
+    email: "preview@orbia.local",
+    territory: "SDIS 31"
+  };
+}
+
+const previewSession = mode === "mock" ? getPreviewSession() : null;
+const initialRoute = previewSession && getRoute() === "login" ? "cartes" : getRoute();
+
 const store = createStore({
   mode,
-  route: getRoute(),
-  session: null,
+  route: initialRoute,
+  session: previewSession,
   dashboard: null,
   notifications: null,
   planning: null,
   online: navigator.onLine,
   installPrompt: null,
-  centerSearch: "",
-  centerFilter: "all",
+  selectedCenterId: "villefranche-de-lauragais",
   authBusy: false,
   authError: "",
   dataBusy: false,
@@ -30,6 +40,20 @@ function setState(patch) {
 function syncRoute() {
   const route = store.getState().session ? getRoute() : "login";
   setState({ route });
+}
+
+function resolveSelectedCenterId(dashboard, preferredCenterId) {
+  if (!dashboard || !dashboard.centers.length) {
+    return preferredCenterId;
+  }
+
+  const hasPreferredCenter = dashboard.centers.some((center) => center.id === preferredCenterId);
+
+  if (hasPreferredCenter) {
+    return preferredCenterId;
+  }
+
+  return dashboard.defaultCenterId || dashboard.centers[0].id;
 }
 
 async function refreshData() {
@@ -50,11 +74,13 @@ async function refreshData() {
       gateway.getNotifications(),
       gateway.getPlanning()
     ]);
+    const selectedCenterId = resolveSelectedCenterId(dashboard, current.selectedCenterId);
 
     setState({
       dashboard,
       notifications,
       planning,
+      selectedCenterId,
       dataBusy: false,
       loadingMessage: ""
     });
@@ -74,7 +100,15 @@ async function bootstrap() {
   renderApp(root, store.getState());
 
   try {
-    const session = await gateway.restoreSession();
+    let session = store.getState().session;
+
+    if (!session) {
+      session = await gateway.restoreSession();
+    }
+
+    if (!session && mode === "mock") {
+      session = getPreviewSession();
+    }
 
     if (session) {
       setState({ session, authError: "" });
@@ -123,13 +157,6 @@ root.addEventListener("click", async (event) => {
     return;
   }
 
-  const filterButton = event.target.closest("[data-status-filter]");
-
-  if (filterButton) {
-    setState({ centerFilter: filterButton.dataset.statusFilter || "all" });
-    return;
-  }
-
   const actionButton = event.target.closest("[data-action]");
 
   if (!actionButton) {
@@ -165,21 +192,20 @@ root.addEventListener("click", async (event) => {
       planning: null,
       authBusy: false,
       authError: "",
-      centerSearch: "",
-      centerFilter: "all"
+      selectedCenterId: "villefranche-de-lauragais"
     });
     goTo("login");
   }
 });
 
-root.addEventListener("input", (event) => {
-  const input = event.target.closest("[data-field='center-search']");
+root.addEventListener("change", (event) => {
+  const select = event.target.closest("[data-field='selected-center']");
 
-  if (!input) {
+  if (!select) {
     return;
   }
 
-  setState({ centerSearch: input.value });
+  setState({ selectedCenterId: select.value });
 });
 
 root.addEventListener("submit", async (event) => {

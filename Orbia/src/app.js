@@ -76,7 +76,7 @@ function renderShell(state, view) {
       <nav class="tabbar" aria-label="Navigation principale">
         <button class="tabbar__item ${route === "cartes" ? "tabbar__item--active" : ""}" data-route="cartes">
           ${icon("cartes")}
-          <span>Cartes</span>
+          <span>Statut</span>
         </button>
         <button class="tabbar__item ${route === "notifications" ? "tabbar__item--active" : ""}" data-route="notifications">
           ${icon("notifications")}
@@ -88,9 +88,15 @@ function renderShell(state, view) {
         </button>
       </nav>
 
-      <button class="floating-logout" data-action="logout" aria-label="Se deconnecter">
-        Sortir
-      </button>
+      ${
+        mode === "proxy"
+          ? `
+            <button class="floating-logout" data-action="logout" aria-label="Se deconnecter">
+              Sortir
+            </button>
+          `
+          : ""
+      }
     </div>
   `;
 }
