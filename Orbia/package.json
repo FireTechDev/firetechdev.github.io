@@ -1,0 +1,7 @@
+{
+  "name": "orbia",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PWA mobile-first pour surcouche UI d'Orbe"
+}
