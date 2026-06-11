@@ -62,6 +62,77 @@ function titleFromEmail(email = "") {
     .join(" ");
 }
 
+function normalizeAvatarUrl(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return "";
+  }
+
+  const avatarUrl = value.trim();
+
+  if (/^(https?:)?\/\//i.test(avatarUrl) || avatarUrl.startsWith("data:")) {
+    return avatarUrl.startsWith("//") ? `https:${avatarUrl}` : avatarUrl;
+  }
+
+  try {
+    return new URL(avatarUrl, ORBE_BASE_URL).toString();
+  } catch {
+    return "";
+  }
+}
+
+function avatarCandidateUrl(value) {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return normalizeAvatarUrl(value);
+  }
+
+  if (typeof value === "object") {
+    return (
+      normalizeAvatarUrl(value.url) ||
+      normalizeAvatarUrl(value.src) ||
+      normalizeAvatarUrl(value.href) ||
+      normalizeAvatarUrl(value.path) ||
+      normalizeAvatarUrl(value.fileUrl)
+    );
+  }
+
+  return "";
+}
+
+function avatarUrlFromProfile(me) {
+  const user = me?.user || {};
+  const candidates = [
+    me?.avatarUrl,
+    me?.photoUrl,
+    me?.pictureUrl,
+    me?.avatar,
+    me?.photo,
+    me?.picture,
+    me?.profilePicture,
+    user.avatarUrl,
+    user.photoUrl,
+    user.pictureUrl,
+    user.imageUrl,
+    user.avatar,
+    user.photo,
+    user.picture,
+    user.profilePicture
+  ];
+
+  for (const candidate of candidates) {
+    const avatarUrl = avatarCandidateUrl(candidate);
+
+    if (avatarUrl) {
+      return avatarUrl;
+    }
+  }
+
+  return "";
+}
+
 function parseCookies(header = "") {
   return header
     .split(";")
@@ -178,6 +249,7 @@ function createSessionProfile(me, fallbackEmail = "") {
   return {
     displayName: title || user.displayName || titleFromEmail(email),
     email,
+    avatarUrl: avatarUrlFromProfile(me),
     territory: "SDIS 31",
     focusLabel: "Centre operationnel"
   };

@@ -11,6 +11,7 @@ const previewSession =
     ? {
         displayName: "Tael PINAULT",
         email: "preview@orbia.local",
+        avatarUrl: "",
         territory: "SDIS 31",
         focusLabel: "Centre operationnel"
       }

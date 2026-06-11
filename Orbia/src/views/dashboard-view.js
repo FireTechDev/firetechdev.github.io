@@ -124,7 +124,7 @@ export function renderDashboardView(state) {
         <div class="hero-ops__header">
           <div>
             <p class="eyebrow eyebrow--light">Disponibilite</p>
-            <h2>${center.name}</h2>
+            <h2 class="hero-ops__center-title">${center.name}</h2>
           </div>
           <button class="button button--ghost button--light" data-action="refresh">
             Rafraichir

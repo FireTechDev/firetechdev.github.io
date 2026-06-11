@@ -10,7 +10,9 @@ function icon(name) {
     inters:
       '<path d="M7 18h10" /><path d="m8 18 1.6-5.2A3.5 3.5 0 0 1 13 10h.4a3.5 3.5 0 0 1 3.4 2.8L18 18" /><path d="M11.1 10 9.8 6.8A1 1 0 0 1 10.7 5h2.6a1 1 0 0 1 .9 1.4L12.9 10" />',
     dispo:
-      '<rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6" />'
+      '<rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6" />',
+    menu:
+      '<path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" />'
   };
 
   return `
@@ -20,22 +22,43 @@ function icon(name) {
   `;
 }
 
+function initialsFromName(name = "") {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
+}
+
+function renderUserAvatar(session) {
+  if (session.avatarUrl) {
+    return `
+      <img
+        class="topbar__avatar"
+        src="${session.avatarUrl}"
+        alt=""
+        loading="lazy"
+      />
+    `;
+  }
+
+  return `<span class="topbar__avatar topbar__avatar--fallback">${initialsFromName(session.displayName)}</span>`;
+}
+
 function renderShell(state, view) {
-  const { route, session, mode, online, installPrompt, dataBusy, loadingMessage, authError } = state;
+  const { route, session, mode, installPrompt, dataBusy, loadingMessage, authError } = state;
 
   return `
     <div class="app-shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Orbia terrain</p>
+        <div class="topbar__profile">
+          ${renderUserAvatar(session)}
           <h1>${session.displayName}</h1>
         </div>
-        <div class="topbar__actions">
-          <span class="badge ${online ? "badge--soft" : "badge--warning"}">
-            ${online ? "En ligne" : "Hors ligne"}
-          </span>
-          <span class="badge badge--soft">Source ${mode === "proxy" ? "reelle" : "mock"}</span>
-        </div>
+        <button class="topbar__menu" data-action="open-menu" aria-label="Ouvrir le menu">
+          ${icon("menu")}
+        </button>
       </header>
 
       ${

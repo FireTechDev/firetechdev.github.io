@@ -1,4 +1,4 @@
-const CACHE_NAME = "orbia-shell-v4";
+const CACHE_NAME = "orbia-shell-v5";
 const APP_BASE_URL = new URL("./", self.location.href);
 const APP_BASE_PATH = APP_BASE_URL.pathname;
 const INDEX_URL = new URL("./index.html", self.location.href).toString();

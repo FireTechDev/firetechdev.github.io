@@ -10,6 +10,7 @@ const NOW = new Date("2026-06-11T16:52:00+02:00");
 const mockSession = {
   displayName: "Tael PINAULT",
   email: "preview@orbia.local",
+  avatarUrl: "",
   territory: "SDIS 31",
   focusLabel: "Centre operationnel"
 };

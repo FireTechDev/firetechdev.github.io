@@ -260,7 +260,9 @@ export function renderPlanningView(state) {
   const positionLabel = position ? compactPositionLabel(position) : "Statut";
   const isUnavailableMode = draft.availabilityMode === "unavailable";
   const actionLabel =
-    draft.periodMode === "hour"
+    isUnavailableMode
+      ? "Declarer indisponible"
+      : draft.periodMode === "hour"
       ? `Declarer dispo · ${positionLabel} · jusqu'a ${draft.endHour || "18:00"}`
       : `Declarer dispo · ${positionLabel} · ${draft.hours || planning.quickOptions.defaultHours}h`;
 
@@ -285,17 +287,29 @@ export function renderPlanningView(state) {
         ${renderAvailabilityMode(draft)}
       </div>
 
-      <div class="planning-section-title">
-        <p class="section-label">Type de disponibilite</p>
-      </div>
+      ${
+        isUnavailableMode
+          ? ""
+          : `
+            <div class="planning-section-title">
+              <p class="section-label">Type de disponibilite</p>
+            </div>
 
-      <div class="position-list">
-        ${
-          planning.quickOptions.enabled
-            ? renderPositionCards(planning, draft)
-            : `<p class="empty-state">Orbe ne remonte actuellement aucune disponibilite programmable.</p>`
-        }
-      </div>
+            <div class="position-list">
+              ${
+                planning.quickOptions.enabled
+                  ? renderPositionCards(planning, draft)
+                  : `<p class="empty-state">Orbe ne remonte actuellement aucune disponibilite programmable.</p>`
+              }
+            </div>
+          `
+      }
+
+      ${
+        isUnavailableMode
+          ? `<p class="inline-message">La declaration d'indisponibilite sera branchee avec la vraie data Orbe.</p>`
+          : ""
+      }
 
       ${renderPeriodMode(draft)}
 
