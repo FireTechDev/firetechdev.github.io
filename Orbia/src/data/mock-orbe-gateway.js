@@ -4,7 +4,7 @@ const wait = (delay = 180) =>
   });
 
 const SESSION_KEY = "orbia-mock-session";
-const PLANNING_KEY = "orbia-mock-planning";
+const PLANNING_KEY = "orbia-mock-planning-v2";
 const NOW = new Date("2026-06-11T16:52:00+02:00");
 
 const mockSession = {
