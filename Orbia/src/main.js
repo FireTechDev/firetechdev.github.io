@@ -16,6 +16,7 @@ const previewSession =
       }
     : null;
 const initialRoute = previewSession && getRoute() === "login" ? "cartes" : getRoute();
+const DEFAULT_END_HOUR = "18:00";
 
 const store = createStore({
   mode,
@@ -61,6 +62,20 @@ function resolveSelectedCenterId(dashboard, preferredCenterId) {
   return dashboard.center?.id || dashboard.defaultCenterId || dashboard.centers[0].id;
 }
 
+function hoursUntilEndHour(endHour) {
+  const [hour = "18", minute = "00"] = String(endHour || DEFAULT_END_HOUR).split(":");
+  const now = new Date();
+  const target = new Date(now);
+
+  target.setHours(Number(hour), Number(minute), 0, 0);
+
+  if (target.getTime() <= now.getTime()) {
+    target.setDate(target.getDate() + 1);
+  }
+
+  return Math.max(1, Math.min(6, Math.ceil((target.getTime() - now.getTime()) / 3600000)));
+}
+
 function createPlanningDraft(planning, currentDraft) {
   if (!planning?.quickOptions) {
     return null;
@@ -75,6 +90,9 @@ function createPlanningDraft(planning, currentDraft) {
     : planning.quickOptions.defaultPositionId;
 
   return {
+    availabilityMode: currentDraft?.availabilityMode || "available",
+    periodMode: currentDraft?.periodMode || "duration",
+    endHour: currentDraft?.endHour || DEFAULT_END_HOUR,
     hours: nextHours,
     positionId: nextPositionId
   };
@@ -289,6 +307,34 @@ root.addEventListener("change", async (event) => {
     });
   }
 
+  const availabilityMode = event.target.closest("[data-field='planning-availability-mode']");
+
+  if (availabilityMode) {
+    setState({
+      planningDraft: {
+        ...(store.getState().planningDraft || {}),
+        availabilityMode: availabilityMode.value
+      },
+      planningError: "",
+      planningMessage: ""
+    });
+    return;
+  }
+
+  const periodMode = event.target.closest("[data-field='planning-period-mode']");
+
+  if (periodMode) {
+    setState({
+      planningDraft: {
+        ...(store.getState().planningDraft || {}),
+        periodMode: periodMode.value
+      },
+      planningError: "",
+      planningMessage: ""
+    });
+    return;
+  }
+
   const hoursInput = event.target.closest("input[name='hours']");
 
   if (hoursInput) {
@@ -297,6 +343,21 @@ root.addEventListener("change", async (event) => {
         ...(store.getState().planningDraft || {}),
         hours: Number(hoursInput.value)
       }
+    });
+    return;
+  }
+
+  const endHourInput = event.target.closest("[data-field='planning-end-hour']");
+
+  if (endHourInput) {
+    setState({
+      planningDraft: {
+        ...(store.getState().planningDraft || {}),
+        endHour: endHourInput.value,
+        hours: hoursUntilEndHour(endHourInput.value)
+      },
+      planningError: "",
+      planningMessage: ""
     });
   }
 });
@@ -347,9 +408,19 @@ root.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const formData = new FormData(quickShiftForm);
-  const hours = Number(formData.get("hours") || store.getState().planningDraft?.hours || 2);
+  const currentDraft = store.getState().planningDraft || {};
+
+  if (currentDraft.availabilityMode === "unavailable") {
+    setState({
+      planningError: "La declaration d'indisponibilite sera branchee avec la vraie data Orbe.",
+      planningMessage: ""
+    });
+    return;
+  }
+
+  const hours = Number(formData.get("hours") || currentDraft.hours || 2);
   const positionId = String(
-    formData.get("positionId") || store.getState().planningDraft?.positionId || ""
+    formData.get("positionId") || currentDraft.positionId || ""
   );
 
   setState({
@@ -362,7 +433,7 @@ root.addEventListener("submit", async (event) => {
     const planning = await gateway.createQuickShift({ hours, positionId });
     setState({
       planning,
-      planningDraft: createPlanningDraft(planning, { hours, positionId }),
+      planningDraft: createPlanningDraft(planning, { ...currentDraft, hours, positionId }),
       planningBusy: false,
       planningError: "",
       planningMessage: `Programme sur ${hours} h enregistre.`

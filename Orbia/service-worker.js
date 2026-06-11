@@ -1,4 +1,4 @@
-const CACHE_NAME = "orbia-shell-v2";
+const CACHE_NAME = "orbia-shell-v3";
 const APP_BASE_URL = new URL("./", self.location.href);
 const APP_BASE_PATH = APP_BASE_URL.pathname;
 const INDEX_URL = new URL("./index.html", self.location.href).toString();
@@ -12,6 +12,7 @@ const APP_SHELL = [
   new URL("./src/app.js", self.location.href).toString(),
   new URL("./src/router.js", self.location.href).toString(),
   new URL("./src/store.js", self.location.href).toString(),
+  new URL("./src/map-controller.js", self.location.href).toString(),
   new URL("./src/styles.css", self.location.href).toString(),
   new URL("./src/data/create-orbe-gateway.js", self.location.href).toString(),
   new URL("./src/data/mock-orbe-gateway.js", self.location.href).toString(),

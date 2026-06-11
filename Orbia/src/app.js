@@ -83,15 +83,15 @@ function renderShell(state, view) {
       <nav class="tabbar" aria-label="Navigation principale">
         <button class="tabbar__item ${route === "cartes" ? "tabbar__item--active" : ""}" data-route="cartes">
           ${icon("centre")}
-          <span>Centre</span>
-        </button>
-        <button class="tabbar__item ${route === "notifications" ? "tabbar__item--active" : ""}" data-route="notifications">
-          ${icon("inters")}
-          <span>Inters</span>
+          <span>Disponibilite</span>
         </button>
         <button class="tabbar__item ${route === "planning" ? "tabbar__item--active" : ""}" data-route="planning">
           ${icon("dispo")}
-          <span>Ma dispo</span>
+          <span>Planning</span>
+        </button>
+        <button class="tabbar__item ${route === "notifications" ? "tabbar__item--active" : ""}" data-route="notifications">
+          ${icon("inters")}
+          <span>Interventions</span>
         </button>
       </nav>
 

@@ -47,15 +47,17 @@ const dashboardFixture = {
       name: "VILLEFRANCHE-LGAIS",
       stationLabel: "VILLEFRANC",
       note: "Vue prioritaire du centre au chargement. Les autres centres restent accessibles depuis le select.",
-      armabilityPercent: 83,
+      armabilityPercent: 94,
       summary: {
-        availableFirefighters: 5,
-        armableVehicles: 2,
+        availableFirefighters: 7,
+        armableVehicles: 6,
         currentInterventions: 1,
         last24hInterventions: 6
       },
       statusChips: [
-        { key: "d1", label: "D1", count: 5 }
+        { key: "garde", label: "Garde", count: 1 },
+        { key: "d1", label: "D1", count: 5 },
+        { key: "d2", label: "D2", count: 1 }
       ],
       crewGroups: [
         {
@@ -71,6 +73,9 @@ const dashboardFixture = {
               statusGroup: "D1",
               statusLabel: "DISPO 1 CATE",
               detail: "Dernier depart 09/06 15:05",
+              shiftStartLabel: "06:00",
+              shiftEndLabel: "18:00",
+              shiftDurationLabel: "12h",
               skillHighlights: ["CA INC", "CA SR", "COND VL"]
             },
             {
@@ -81,6 +86,9 @@ const dashboardFixture = {
               statusGroup: "D1",
               statusLabel: "DISPO 1 CA1E",
               detail: "Dernier depart 06/06 15:06",
+              shiftStartLabel: "08:00",
+              shiftEndLabel: "20:00",
+              shiftDurationLabel: "12h",
               skillHighlights: ["CA SSUAP", "EQ INC", "COND VL"]
             },
             {
@@ -91,6 +99,9 @@ const dashboardFixture = {
               statusGroup: "D1",
               statusLabel: "DISPO 1 CA1E",
               detail: "Aucun depart recent",
+              shiftStartLabel: "14:00",
+              shiftEndLabel: "02:00",
+              shiftDurationLabel: "12h",
               skillHighlights: ["CA INC", "COD1", "COND PL"]
             },
             {
@@ -101,6 +112,9 @@ const dashboardFixture = {
               statusGroup: "D1",
               statusLabel: "DISPO 1 EQ/CE",
               detail: "Dernier depart 06/06 14:24",
+              shiftStartLabel: "06:00",
+              shiftEndLabel: "14:00",
+              shiftDurationLabel: "8h",
               skillHighlights: ["EQ SSUAP", "EQ INC", "EQ FDFEN"]
             },
             {
@@ -111,7 +125,50 @@ const dashboardFixture = {
               statusGroup: "D1",
               statusLabel: "DISPO 1 CA1E",
               detail: "Dernier depart 16/04 10:55",
+              shiftStartLabel: "10:00",
+              shiftEndLabel: "22:00",
+              shiftDurationLabel: "12h",
               skillHighlights: ["CA SSUAP", "EQ INC", "COND VL"]
+            }
+          ]
+        },
+        {
+          key: "garde",
+          label: "Garde",
+          count: 1,
+          firefighters: [
+            {
+              id: "vlf-6",
+              name: "Nicolas DURAND",
+              grade: "CPL",
+              statusKey: "garde",
+              statusGroup: "Garde",
+              statusLabel: "GARDE",
+              detail: "Disponible au centre",
+              shiftStartLabel: "08:00",
+              shiftEndLabel: "16:00",
+              shiftDurationLabel: "8h",
+              skillHighlights: ["EQ INC", "EQ SSUAP"]
+            }
+          ]
+        },
+        {
+          key: "d2",
+          label: "D2",
+          count: 1,
+          firefighters: [
+            {
+              id: "vlf-7",
+              name: "Paul MARTIN",
+              grade: "SP",
+              statusKey: "d2",
+              statusGroup: "D2",
+              statusLabel: "DISPO 2",
+              detail: "Disponible sur rappel",
+              shiftStartLabel: "18:00",
+              shiftEndLabel: "06:00",
+              shiftDurationLabel: "12h",
+              skillHighlights: ["EQ INC"]
             }
           ]
         }
@@ -135,7 +192,7 @@ const dashboardFixture = {
           ]
         },
         {
-          name: "VSAV",
+          name: "CCF",
           status: "Armable",
           description: "Complet",
           available: true,
@@ -143,11 +200,65 @@ const dashboardFixture = {
           totalRoles: 3,
           percent: 100,
           missingRoles: [],
+          roles: []
+        },
+        {
+          name: "VSAV 1",
+          status: "Armable",
+          description: "Complet",
+          available: true,
+          availableRoles: 2,
+          totalRoles: 2,
+          percent: 100,
+          missingRoles: [],
           roles: [
             { code: "CA SSUAP", label: "Chef d'agres", available: true },
-            { code: "COND VL", label: "Conducteur", available: true },
             { code: "EQ SSUAP", label: "Equipier", available: true }
           ]
+        },
+        {
+          name: "VSAV 2",
+          status: "Armable",
+          description: "Complet",
+          available: true,
+          availableRoles: 2,
+          totalRoles: 2,
+          percent: 100,
+          missingRoles: [],
+          roles: []
+        },
+        {
+          name: "CCGC",
+          status: "Sous-effectif",
+          description: "A completer",
+          available: false,
+          availableRoles: 1,
+          totalRoles: 2,
+          percent: 50,
+          missingRoles: ["Conducteur"],
+          roles: []
+        },
+        {
+          name: "VID",
+          status: "Armable",
+          description: "Complet",
+          available: true,
+          availableRoles: 2,
+          totalRoles: 2,
+          percent: 100,
+          missingRoles: [],
+          roles: []
+        },
+        {
+          name: "VL",
+          status: "Armable",
+          description: "Complet",
+          available: true,
+          availableRoles: 1,
+          totalRoles: 1,
+          percent: 100,
+          missingRoles: [],
+          roles: []
         }
       ],
       currentOperations: [
@@ -346,44 +457,84 @@ const planningFixture = {
   quickOptions: {
     enabled: true,
     hours: [1, 2, 3, 4, 5, 6],
-    defaultHours: 2,
+    defaultHours: 4,
     maxDurationDays: 7,
     affectationId: "65a249ec-d08a-4380-b7ec-67522f5fdda3",
     availabilityCode: "DISPONIBLE_8",
     availabilityShort: "D8",
     availabilityLabel: "Disponibilite",
-    defaultPositionId: "40b49f22-96da-462a-8109-a074016b7a59",
+    defaultPositionId: "79d16d45-4a00-48b2-8661-a77a5fa73e0d",
     positions: [
       {
+        id: "79d16d45-4a00-48b2-8661-a77a5fa73e0d",
+        code: "D1 CATE",
+        label: "D1 CATE"
+      },
+      {
         id: "40b49f22-96da-462a-8109-a074016b7a59",
-        code: "D1E",
-        label: "DISPO 1 EQ/CE"
+        code: "D1 EQ/CE",
+        label: "D1 EQ/CE"
       },
       {
         id: "2b1a79ab-dca9-4f30-a6c8-a9f4cdc07171",
-        code: "D1A",
-        label: "DISPO 1 CA1E"
+        code: "D1 EQ",
+        label: "D1 EQ"
       },
       {
-        id: "79d16d45-4a00-48b2-8661-a77a5fa73e0d",
-        code: "D1T",
-        label: "DISPO 1 CATE"
+        id: "mock-d2",
+        code: "D2",
+        label: "D2"
+      },
+      {
+        id: "mock-d3",
+        code: "D3",
+        label: "D3"
       }
     ]
   },
   entries: [
     {
       id: "entry-1",
-      startTime: "2026-06-11T18:00:00+02:00",
-      endTime: "2026-06-11T20:00:00+02:00",
-      startLabel: "11/06 18:00",
-      endLabel: "11/06 20:00",
-      durationHours: 2,
+      startTime: "2026-06-12T06:00:00+02:00",
+      endTime: "2026-06-12T18:00:00+02:00",
+      startLabel: "12/06 06:00",
+      endLabel: "12/06 18:00",
+      durationHours: 12,
       centerName: "VILLEFRANCHE-LGAIS",
       availabilityShort: "D8",
       availabilityCode: "DISPONIBLE_8",
-      positionCode: "D1T",
-      positionLabel: "DISPO 1 CATE",
+      positionCode: "D1 CATE",
+      positionLabel: "D1 CATE",
+      isFuture: true,
+      canDelete: true
+    },
+    {
+      id: "entry-2",
+      startTime: "2026-06-14T08:00:00+02:00",
+      endTime: "2026-06-14T16:00:00+02:00",
+      startLabel: "14/06 08:00",
+      endLabel: "14/06 16:00",
+      durationHours: 8,
+      centerName: "VILLEFRANCHE-LGAIS",
+      availabilityShort: "D8",
+      availabilityCode: "DISPONIBLE_8",
+      positionCode: "D1 EQ/CE",
+      positionLabel: "D1 EQ/CE",
+      isFuture: true,
+      canDelete: true
+    },
+    {
+      id: "entry-3",
+      startTime: "2026-06-15T00:00:00+02:00",
+      endTime: "2026-06-15T08:00:00+02:00",
+      startLabel: "15/06 00:00",
+      endLabel: "15/06 08:00",
+      durationHours: 8,
+      centerName: "VILLEFRANCHE-LGAIS",
+      availabilityShort: "ND",
+      availabilityCode: "INDISPONIBLE",
+      positionCode: "INDISPO",
+      positionLabel: "Indisponible",
       isFuture: true,
       canDelete: true
     }

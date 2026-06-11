@@ -1,3 +1,69 @@
+function incidentKind(incident) {
+  const title = `${incident.title || ""} ${incident.city || ""}`.toUpperCase();
+
+  if (title.includes("FEU")) {
+    return "Feu";
+  }
+
+  if (title.includes("ACCIDENT") || title.includes("AVP")) {
+    return "AVP";
+  }
+
+  if (title.includes("SECOURS") || title.includes("AIDE") || title.includes("SAP")) {
+    return "SAV";
+  }
+
+  return "Autre";
+}
+
+function elapsedLabel(incident) {
+  const timestamp = new Date(incident.startTime).getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return incident.startedAtLabel || "--:--";
+  }
+
+  const minutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0) {
+    return `${hours}h${String(remainingMinutes).padStart(2, "0")}`;
+  }
+
+  return `${minutes} min`;
+}
+
+function renderLegend(incidents) {
+  const kinds = [...new Set(incidents.map((incident) => incidentKind(incident)))];
+
+  return kinds
+    .map((kind) => {
+      const incident = incidents.find((item) => incidentKind(item) === kind);
+      return `
+        <span>
+          <i style="--incident-color:${incident?.color || "#4a8c78"}"></i>
+          ${kind}
+        </span>
+      `;
+    })
+    .join("");
+}
+
+function renderIncidentListItem(incident) {
+  return `
+    <article class="incident-card incident-card--compact">
+      <div class="incident-card__topline">
+        <span class="incident-dot" style="--incident-color:${incident.color}"></span>
+        <strong>${incident.title}</strong>
+        <span>${incident.startedAtLabel}</span>
+      </div>
+      <p>${incident.city}</p>
+      <small>${incident.firefighterCount} pompier(s) · ${incident.vehicleCount} engin(s) · ${incident.centers.join(" · ")}</small>
+    </article>
+  `;
+}
+
 export function renderNotificationsView(state) {
   const interventions = state.interventions;
 
@@ -5,86 +71,64 @@ export function renderNotificationsView(state) {
     return `
       <section class="screen-block">
         <div class="panel skeleton-panel">
-          <p class="eyebrow">Inters</p>
+          <p class="eyebrow">Interventions</p>
           <h2>Chargement des interventions en cours...</h2>
         </div>
       </section>
     `;
   }
 
+  const primaryIncident = interventions.incidents[0];
+
   return `
     <section class="screen-block">
-      <div class="hero-ops hero-ops--compact">
-        <div class="hero-ops__header">
-          <div>
-            <p class="eyebrow eyebrow--light">Interventions</p>
-            <h2>Carte des interventions en cours</h2>
-          </div>
-          <button class="button button--ghost button--light" data-action="refresh">
-            Rafraichir
-          </button>
+      <div class="interventions-stage">
+        <div class="interventions-stage__toolbar">
+          <span class="badge badge--warning">${interventions.activeCount} interventions</span>
+          <button class="button button--ghost" data-action="refresh">Rafraichir</button>
         </div>
-        <p class="hero-ops__note">
-          Vue globale des interventions actives, avec focus automatique sur le centre selectionne.
-        </p>
-      </div>
-    </section>
 
-    <section class="screen-block">
-      <div class="stats-grid stats-grid--ops">
-        <article class="stat-card stat-card--warning">
-          <span>Interventions actives</span>
-          <strong>${interventions.activeCount}</strong>
-        </article>
-        <article class="stat-card stat-card--calm">
-          <span>Touchant le centre</span>
-          <strong>${interventions.centerActiveCount}</strong>
-        </article>
-      </div>
-    </section>
-
-    <section class="screen-block">
-      <div class="panel panel--map">
-        <div class="panel__header">
-          <div>
-            <p class="section-label">Carte</p>
-            <h3>Position des interventions geolocalisees</h3>
-          </div>
-          <span class="badge badge--soft">Maj ${interventions.updatedAt}</span>
-        </div>
-        <div class="map-frame">
+        <div class="map-frame map-frame--immersive">
           <div class="map-root" data-map-root></div>
+          <div class="map-overlay map-overlay--legend">
+            ${renderLegend(interventions.incidents)}
+          </div>
+          ${
+            primaryIncident
+              ? `
+                <article class="map-overlay map-overlay--focus">
+                  <div>
+                    <span class="incident-dot" style="--incident-color:${primaryIncident.color}"></span>
+                    <strong>${primaryIncident.title}</strong>
+                    <p>${primaryIncident.city}</p>
+                  </div>
+                  <div>
+                    <span>${elapsedLabel(primaryIncident)}</span>
+                    <small>${primaryIncident.vehicleCount} engin(s)</small>
+                  </div>
+                </article>
+              `
+              : ""
+          }
         </div>
       </div>
     </section>
 
     <section class="screen-block">
       <div class="panel">
-        <div class="panel__header">
+        <div class="panel__header panel__header--tight">
           <div>
-            <p class="section-label">Flux actif</p>
-            <h3>Lecture mobile des interventions</h3>
+            <h3>Interventions en cours</h3>
+            <p>${interventions.centerActiveCount} touchant le centre · Maj ${interventions.updatedAt}</p>
           </div>
+          <span class="badge badge--soft">${interventions.activeCount}</span>
         </div>
 
-        <div class="list-stack">
-          ${interventions.incidents
-            .map(
-              (incident) => `
-                <article class="incident-card">
-                  <div class="incident-card__topline">
-                    <span class="incident-dot" style="--incident-color:${incident.color}"></span>
-                    <span>${incident.city}</span>
-                    <span>${incident.startedAtLabel}</span>
-                  </div>
-                  <h4>${incident.title}</h4>
-                  <p>${incident.firefighterCount} pompier(s) · ${incident.vehicleCount} engin(s)</p>
-                  <small>${incident.centers.join(" · ")}</small>
-                </article>
-              `
-            )
-            .join("")}
-        </div>
+        ${
+          interventions.incidents.length
+            ? `<div class="list-stack">${interventions.incidents.map((incident) => renderIncidentListItem(incident)).join("")}</div>`
+            : `<p class="empty-state">Aucune intervention active pour le moment.</p>`
+        }
       </div>
     </section>
   `;

@@ -1,14 +1,6 @@
-const STATUS_CLASS = {
-  garde: "status-pill--garde",
-  astreinte: "status-pill--astreinte",
-  d1: "status-pill--d1",
-  d2: "status-pill--d2",
-  d3: "status-pill--d3",
-  inter: "status-pill--inter",
-  other: "status-pill--watch"
-};
+const GRADE_ORDER = ["LTN", "ADJ", "SGT", "CPL", "SAP", "SAP1", "SP"];
 
-function initialsFromName(name) {
+function initialsFromName(name = "") {
   return name
     .split(" ")
     .filter(Boolean)
@@ -17,55 +9,94 @@ function initialsFromName(name) {
     .join("");
 }
 
-function renderGauge(percent) {
-  const radius = 72;
-  const circumference = 2 * Math.PI * radius;
-  const strokeOffset = circumference - (Math.max(0, Math.min(percent, 100)) / 100) * circumference;
+function allFirefighters(center) {
+  return (center.crewGroups || []).flatMap((group) => group.firefighters || []);
+}
+
+function renderGradeChips(firefighters) {
+  const counts = firefighters.reduce((accumulator, firefighter) => {
+    const grade = firefighter.grade || "SP";
+    accumulator.set(grade, (accumulator.get(grade) || 0) + 1);
+    return accumulator;
+  }, new Map());
+
+  return [...counts.entries()]
+    .sort(([left], [right]) => {
+      const leftIndex = GRADE_ORDER.indexOf(left);
+      const rightIndex = GRADE_ORDER.indexOf(right);
+      return (leftIndex === -1 ? 99 : leftIndex) - (rightIndex === -1 ? 99 : rightIndex);
+    })
+    .map(
+      ([grade, count]) => `
+        <span class="data-chip">
+          ${grade} <strong>x${count}</strong>
+        </span>
+      `
+    )
+    .join("");
+}
+
+function renderFirefighterTiming(firefighter) {
+  if (firefighter.shiftStartLabel && firefighter.shiftEndLabel) {
+    return {
+      primary: `${firefighter.shiftStartLabel} -> ${firefighter.shiftEndLabel}`,
+      secondary: firefighter.shiftDurationLabel || firefighter.statusLabel
+    };
+  }
+
+  return {
+    primary: firefighter.statusLabel || "Disponible",
+    secondary: firefighter.detail || "Programmation en cours"
+  };
+}
+
+function renderAvailableFirefighter(firefighter) {
+  const timing = renderFirefighterTiming(firefighter);
 
   return `
-    <div class="armability-gauge" aria-label="Armabilite ${percent}%">
-      <svg viewBox="0 0 180 180" role="img" aria-hidden="true">
-        <circle cx="90" cy="90" r="${radius}" class="armability-gauge__track"></circle>
-        <circle
-          cx="90"
-          cy="90"
-          r="${radius}"
-          class="armability-gauge__progress"
-          stroke-dasharray="${circumference}"
-          stroke-dashoffset="${strokeOffset}"
-        ></circle>
-      </svg>
-      <div class="armability-gauge__value">
-        <strong>${percent}</strong>
-        <span>%</span>
+    <article class="availability-row">
+      <div class="availability-row__identity">
+        <span class="initials initials--compact">${initialsFromName(firefighter.name)}</span>
+        <div>
+          <h4>${firefighter.name}</h4>
+          <p>${firefighter.grade || "SP"}</p>
+        </div>
       </div>
-    </div>
+      <div class="availability-row__status">
+        <strong>${timing.primary}</strong>
+        <span>${timing.secondary}</span>
+      </div>
+    </article>
   `;
 }
 
-function renderSummaryCards(center) {
-  return [
-    {
-      label: "Pompiers disponibles",
-      value: center.summary.availableFirefighters,
-      tone: "success"
-    },
-    {
-      label: "Engins armables",
-      value: center.summary.armableVehicles,
-      tone: "calm"
-    },
-    {
-      label: "Interventions actuelles",
-      value: center.summary.currentInterventions,
-      tone: "warning"
-    },
-    {
-      label: "Interventions 24 h",
-      value: center.summary.last24hInterventions,
-      tone: "alert"
-    }
-  ];
+function renderVehicleCard(armability) {
+  const percent = Number.isFinite(armability.percent)
+    ? armability.percent
+    : armability.totalRoles
+      ? Math.round((armability.availableRoles / armability.totalRoles) * 100)
+      : 0;
+  const isReady = Boolean(armability.available);
+
+  return `
+    <article class="armability-card ${isReady ? "armability-card--ready" : "armability-card--watch"}">
+      <div class="armability-card__topline">
+        <strong>${armability.name}</strong>
+        <span class="status-pill ${isReady ? "status-pill--ready" : "status-pill--watch"}">
+          ${isReady ? "Armable" : armability.status || "A completer"}
+        </span>
+      </div>
+      <p>${armability.availableRoles}/${armability.totalRoles} pers.</p>
+      <div class="armability-card__meter" aria-hidden="true">
+        <span style="width:${Math.max(0, Math.min(percent, 100))}%"></span>
+      </div>
+      ${
+        armability.missingRoles?.length
+          ? `<small>Manque: ${armability.missingRoles.join(", ")}</small>`
+          : `<small>${armability.description || "Postes couverts"}</small>`
+      }
+    </article>
+  `;
 }
 
 export function renderDashboardView(state) {
@@ -75,23 +106,24 @@ export function renderDashboardView(state) {
     return `
       <section class="screen-block">
         <div class="panel skeleton-panel">
-          <p class="eyebrow">Centre</p>
-          <h2>Chargement de la liste de garde...</h2>
+          <p class="eyebrow">Disponibilite</p>
+          <h2>Chargement de la disponibilite...</h2>
         </div>
       </section>
     `;
   }
 
   const center = dashboard.center;
-  const cards = renderSummaryCards(center);
-  const firstArmability = center.armabilities[0];
+  const firefighters = allFirefighters(center);
+  const armableCount = center.armabilities.filter((item) => item.available).length;
+  const firstOperation = center.currentOperations[0];
 
   return `
     <section class="screen-block">
-      <div class="hero-ops">
+      <div class="hero-ops hero-ops--compact">
         <div class="hero-ops__header">
           <div>
-            <p class="eyebrow eyebrow--light">Liste de garde</p>
+            <p class="eyebrow eyebrow--light">Disponibilite</p>
             <h2>${center.name}</h2>
           </div>
           <button class="button button--ghost button--light" data-action="refresh">
@@ -113,176 +145,82 @@ export function renderDashboardView(state) {
               .join("")}
           </select>
         </label>
-
-        <p class="hero-ops__note">${center.note}</p>
       </div>
     </section>
 
     <section class="screen-block">
-      <div class="panel panel--gauge">
-        ${renderGauge(center.armabilityPercent)}
-        <div class="panel__content">
-          <p class="section-label">Armabilite</p>
-          <h3>${center.summary.armableVehicles} engin(s) pret(s) a partir</h3>
-          <p>
-            ${
-              firstArmability
-                ? `${firstArmability.name} est ${firstArmability.status.toLowerCase()} avec ${firstArmability.availableRoles}/${firstArmability.totalRoles} postes couverts.`
-                : "Aucun detail d'armabilite n'a ete remonte par Orbe."
-            }
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section class="screen-block">
-      <div class="stats-grid stats-grid--ops">
-        ${cards
-          .map(
-            (card) => `
-              <article class="stat-card stat-card--${card.tone}">
-                <span>${card.label}</span>
-                <strong>${card.value}</strong>
-              </article>
-            `
-          )
-          .join("")}
-      </div>
-    </section>
-
-    <section class="screen-block">
-      <div class="panel">
-        <div class="panel__header">
+      <div class="panel availability-panel">
+        <div class="panel__header panel__header--tight">
           <div>
-            <p class="section-label">Etat dispo.</p>
-            <h3>Qui est mobilisable maintenant</h3>
+            <h3>Pompiers disponibles</h3>
+            <p>Aujourd'hui · mis a jour ${dashboard.updatedAt}</p>
           </div>
-          <span class="badge badge--soft">Maj ${dashboard.updatedAt}</span>
+          <span class="badge badge--strong">${firefighters.length} dispo</span>
         </div>
 
-        <div class="status-chip-grid">
-          ${center.statusChips
-            .map(
-              (chip) => `
-                <article class="availability-chip availability-chip--${chip.key}">
-                  <span>${chip.label}</span>
-                  <strong>${chip.count}</strong>
-                </article>
-              `
-            )
-            .join("")}
+        <div class="data-chip-row">
+          ${renderGradeChips(firefighters)}
+        </div>
+
+        <div class="availability-list">
+          ${
+            firefighters.length
+              ? firefighters.map((firefighter) => renderAvailableFirefighter(firefighter)).join("")
+              : `<p class="empty-state">Aucun pompier disponible actuellement sur ce centre.</p>`
+          }
         </div>
       </div>
     </section>
 
     <section class="screen-block">
       <div class="panel">
-        <div class="panel__header">
+        <div class="panel__header panel__header--tight">
           <div>
-            <p class="section-label">En interventions</p>
-            <h3>${center.currentOperations.length} depart(s) en cours</h3>
+            <h3>Engins armables</h3>
+            <p>Lecture rapide de la capacite de depart.</p>
           </div>
+          <span class="badge badge--soft">${armableCount}/${center.armabilities.length} armes</span>
         </div>
 
+        <div class="armability-grid">
+          ${
+            center.armabilities.length
+              ? center.armabilities.map((armability) => renderVehicleCard(armability)).join("")
+              : `<p class="empty-state">Aucune armabilite detaillee remontee par Orbe.</p>`
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block">
+      <div class="panel panel--dense">
+        <div class="compact-metrics">
+          <article>
+            <span>Interventions actuelles</span>
+            <strong>${center.summary.currentInterventions}</strong>
+          </article>
+          <article>
+            <span>Interventions 24 h</span>
+            <strong>${center.summary.last24hInterventions}</strong>
+          </article>
+          <article>
+            <span>Engins armables</span>
+            <strong>${armableCount}</strong>
+          </article>
+        </div>
         ${
-          center.currentOperations.length
+          firstOperation
             ? `
-              <div class="ops-list">
-                ${center.currentOperations
-                  .map(
-                    (operation) => `
-                      <article class="ops-list__item">
-                        <div>
-                          <strong>${operation.title}</strong>
-                          <p>${operation.city} · depuis ${operation.startedAtLabel}</p>
-                        </div>
-                        <span class="badge badge--soft">${operation.vehicleCount} engin(s)</span>
-                      </article>
-                    `
-                  )
-                  .join("")}
+              <div class="current-operation-strip">
+                <span class="incident-dot" style="--incident-color:${firstOperation.color}"></span>
+                <div>
+                  <strong>${firstOperation.title}</strong>
+                  <p>${firstOperation.city} · depuis ${firstOperation.startedAtLabel}</p>
+                </div>
               </div>
             `
             : `<p class="empty-state">Aucune intervention ne mobilise actuellement ce centre.</p>`
         }
-      </div>
-    </section>
-
-    ${center.crewGroups
-      .map(
-        (group) => `
-          <section class="screen-block">
-            <div class="panel panel--crew">
-              <div class="panel__header">
-                <div>
-                  <p class="section-label">${group.label}</p>
-                  <h3>${group.count} pompier(s)</h3>
-                </div>
-              </div>
-
-              <div class="crew-list">
-                ${group.firefighters
-                  .map(
-                    (firefighter) => `
-                      <article class="firefighter-card">
-                        <div class="firefighter-card__identity">
-                          <span class="initials">${initialsFromName(firefighter.name)}</span>
-                          <div>
-                            <p class="firefighter-card__rank">${firefighter.grade}</p>
-                            <h4>${firefighter.name}</h4>
-                            <p>${firefighter.detail}</p>
-                            ${
-                              firefighter.skillHighlights.length
-                                ? `<small>${firefighter.skillHighlights.join(" · ")}</small>`
-                                : ""
-                            }
-                          </div>
-                        </div>
-                        <span class="status-pill ${
-                          STATUS_CLASS[firefighter.statusKey] || STATUS_CLASS.other
-                        }">${firefighter.statusLabel}</span>
-                      </article>
-                    `
-                  )
-                  .join("")}
-              </div>
-            </div>
-          </section>
-        `
-      )
-      .join("")}
-
-    <section class="screen-block">
-      <div class="panel">
-        <div class="panel__header">
-          <div>
-            <p class="section-label">Armabilite detail</p>
-            <h3>Lecture engin par engin</h3>
-          </div>
-        </div>
-
-        <div class="vehicle-list">
-          ${center.armabilities
-            .map(
-              (armability) => `
-                <article class="vehicle-card">
-                  <div>
-                    <strong>${armability.name}</strong>
-                    <p>${armability.description} · ${armability.availableRoles}/${armability.totalRoles} postes couverts</p>
-                    ${
-                      armability.missingRoles.length
-                        ? `<small>Manque: ${armability.missingRoles.join(", ")}</small>`
-                        : `<small>Aucun manque detecte</small>`
-                    }
-                  </div>
-                  <span class="status-pill ${
-                    armability.available ? "status-pill--ready" : "status-pill--watch"
-                  }">${armability.status}</span>
-                </article>
-              `
-            )
-            .join("")}
-        </div>
       </div>
     </section>
   `;
