@@ -1,6 +1,6 @@
 export class ProxyOrbeGateway {
   constructor(baseUrl = "./api") {
-    this.baseUrl = baseUrl;
+    this.baseUrl = baseUrl.replace(/\/$/, "");
   }
 
   async request(path, options = {}) {
@@ -24,7 +24,9 @@ export class ProxyOrbeGateway {
 
     if (!response.ok) {
       throw new Error(
-        typeof payload === "string" ? payload : payload.message || "Requete Orbe indisponible."
+        typeof payload === "string"
+          ? payload
+          : payload.message || payload.details?.info || "Requete Orbia indisponible."
       );
     }
 
@@ -46,15 +48,30 @@ export class ProxyOrbeGateway {
     return this.request("/session", { method: "DELETE" });
   }
 
-  getDashboard() {
-    return this.request("/dashboard", { method: "GET" });
+  getDashboard(centerId) {
+    const search = centerId ? `?centerId=${encodeURIComponent(centerId)}` : "";
+    return this.request(`/dashboard${search}`, { method: "GET" });
   }
 
-  getNotifications() {
-    return this.request("/notifications", { method: "GET" });
+  getInterventions(centerId) {
+    const search = centerId ? `?centerId=${encodeURIComponent(centerId)}` : "";
+    return this.request(`/interventions${search}`, { method: "GET" });
   }
 
   getPlanning() {
     return this.request("/planning", { method: "GET" });
+  }
+
+  createQuickShift(payload) {
+    return this.request("/planning/quick-shift", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  }
+
+  deletePlanningEntry(entryId) {
+    return this.request(`/planning/entry/${encodeURIComponent(entryId)}`, {
+      method: "DELETE"
+    });
   }
 }

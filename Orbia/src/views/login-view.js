@@ -7,7 +7,7 @@ export function renderLoginView(state) {
         <p class="eyebrow">PWA mobile-first</p>
         <h1>Orbia</h1>
         <p class="lead">
-          Une surcouche plus claire, plus rapide et plus lisible pour les usages terrain.
+          Une surcouche mobile pour lire la garde, voir l'armabilite, se programmer vite et suivre les inters en cours.
         </p>
         <div class="hero-badges">
           <span class="badge badge--soft">Mode ${mode === "proxy" ? "connecte" : "prototype"}</span>
@@ -47,7 +47,7 @@ export function renderLoginView(state) {
         ${
           authError
             ? `<p class="inline-message inline-message--error">${authError}</p>`
-            : `<p class="inline-message">La version prototype accepte n'importe quelle combinaison non vide.</p>`
+            : `<p class="inline-message">${mode === "proxy" ? "Connexion Orbe via le relais Orbia." : "En mode mock, n'importe quelle combinaison non vide suffit."}</p>`
         }
 
         <button class="button button--primary button--large" type="submit" ${

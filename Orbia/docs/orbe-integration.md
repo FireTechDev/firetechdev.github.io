@@ -1,54 +1,55 @@
 # Notes d'integration Orbe
 
-## Observations techniques
+## Architecture retenue
 
-Constat releve le `11 juin 2026` :
+La vraie PWA s'appuie sur deux briques :
 
-- application chargee depuis `https://orbe.aum.bio/#/login`
-- SPA `Angular 19.2.14`
-- routes observees dans le bundle principal :
-  - `homepage`
-  - `notifications/manual`
-  - `planning/my-planning`
-  - `operations/:id`
-- navigation interne basee sur le hash router
+- un `frontend PWA` mobile-first
+- un `BFF` Orbia qui relaie la session Orbe et reformate les donnees
 
-## Consequence pour la PWA
+Le backend vit dans [server/orbe-bff.mjs](/Users/tael/Documents/Orbia/work-orbia/server/orbe-bff.mjs).
 
-Une surcouche mobile autonome ne doit pas dependre du DOM existant d'Orbe si elle doit tenir dans le temps.
+## Pourquoi un backend est obligatoire
 
-La bonne separation est :
+Constats releves le `11 juin 2026` :
 
-- `frontend PWA` pour le rendu mobile
-- `proxy serveur` pour la session et la traduction des donnees Orbe
+- Orbe est une SPA `Angular 19`
+- l'authentification passe par cookies serveur
+- les appels utiles ne sont pas consommables proprement depuis un frontend externe pur
+- les ecritures de planning demandent aussi la conservation du jeton `XSRF`
 
-## Pourquoi un proxy est prefere
+Conclusion : `GitHub Pages` seul ne suffit pas pour la vraie data.
 
-Comme aucune session exploitable n'a ete vue en `localStorage` ou `sessionStorage`, il est probable que l'authentification passe par des mecanismes non directement reutilisables depuis un frontend externe.
+## Endpoints Orbe utilises
 
-Le proxy permet de :
+Lecture :
 
-- centraliser la connexion Orbe
-- conserver les cookies ou secrets de session cote serveur
-- exposer des DTO stables pour l'UI mobile
-- eviter de coupler l'app mobile au HTML et aux composants Angular existants
+- `POST /api/auth/cookie`
+- `GET /api/me/user/details`
+- `GET /api/me/centers`
+- `GET /api/me/centers/:id/details`
+- `GET /api/me/operations`
+- `GET /api/me/planning`
+- `GET /api/nexsis/v1/disponibilites/en-cours`
+- `GET /api/me/planning/date-limits`
 
-## Strategie de mapping conseillee
+Ecriture :
 
-### Ecran 1
+- `POST /api/nexsis/v1/disponibilites/demande`
+- `DELETE /api/me/planning/entry/:id`
 
-- source Orbe : `homepage`
-- cible Orbia : `Cartes`
-- objectif UI : lecture courte, priorites, centres sous tension, indicateurs de disponibilite
+## DTO exposes au frontend
 
-### Ecran 2
+Le frontend ne parle plus directement le modele Orbe brut. Le BFF expose des DTO centres sur l'usage mobile :
 
-- source Orbe : `notifications/manual`
-- cible Orbia : `Notifications`
-- objectif UI : flux vertical simple, priorisation, actions evidentes
+- `dashboard`
+- `interventions`
+- `planning`
 
-### Ecran 3
+L'objectif est d'avoir des objets stables, plus faciles a faire evoluer cote UI.
 
-- source Orbe : `planning/my-planning`
-- cible Orbia : `Planning`
-- objectif UI : prochain service, timeline, changements critiques
+## Limites connues a ce stade
+
+- le flux `planning/quick-shift` est branche en best effort sur le payload Orbe observe dans les bundles et les donnees lues
+- le comptage `24 h` et la carte des inters reposent sur `GET /api/me/operations`, qui depend des droits reels du compte connecte
+- pour un deploiement public hors localhost, il faudra heberger le BFF sur un host HTTPS si le frontend reste sur un domaine distinct

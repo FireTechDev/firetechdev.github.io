@@ -1,36 +1,41 @@
 import { renderApp } from "./app.js";
 import { createOrbeGateway } from "./data/create-orbe-gateway.js";
+import { syncInterventionsMap } from "./map-controller.js";
 import { goTo, getRoute } from "./router.js";
 import { createStore } from "./store.js";
 
 const root = document.querySelector("#app");
-const { gateway, mode } = createOrbeGateway();
-
-function getPreviewSession() {
-  return {
-    displayName: "Tael PINAULT",
-    email: "preview@orbia.local",
-    territory: "SDIS 31"
-  };
-}
-
-const previewSession = mode === "mock" ? getPreviewSession() : null;
+const { gateway, mode, apiBase } = createOrbeGateway();
+const previewSession =
+  mode === "mock"
+    ? {
+        displayName: "Tael PINAULT",
+        email: "preview@orbia.local",
+        territory: "SDIS 31",
+        focusLabel: "Centre operationnel"
+      }
+    : null;
 const initialRoute = previewSession && getRoute() === "login" ? "cartes" : getRoute();
 
 const store = createStore({
   mode,
+  apiBase,
   route: initialRoute,
   session: previewSession,
   dashboard: null,
-  notifications: null,
+  interventions: null,
   planning: null,
+  planningDraft: null,
   online: navigator.onLine,
   installPrompt: null,
-  selectedCenterId: "villefranche-de-lauragais",
+  selectedCenterId: "104",
   authBusy: false,
   authError: "",
   dataBusy: false,
-  loadingMessage: "Chargement..."
+  loadingMessage: "Chargement...",
+  planningBusy: false,
+  planningError: "",
+  planningMessage: ""
 });
 
 function setState(patch) {
@@ -43,7 +48,7 @@ function syncRoute() {
 }
 
 function resolveSelectedCenterId(dashboard, preferredCenterId) {
-  if (!dashboard || !dashboard.centers.length) {
+  if (!dashboard?.centers?.length) {
     return preferredCenterId;
   }
 
@@ -53,10 +58,29 @@ function resolveSelectedCenterId(dashboard, preferredCenterId) {
     return preferredCenterId;
   }
 
-  return dashboard.defaultCenterId || dashboard.centers[0].id;
+  return dashboard.center?.id || dashboard.defaultCenterId || dashboard.centers[0].id;
 }
 
-async function refreshData() {
+function createPlanningDraft(planning, currentDraft) {
+  if (!planning?.quickOptions) {
+    return null;
+  }
+
+  const positionIds = new Set(planning.quickOptions.positions.map((position) => position.id));
+  const nextHours = planning.quickOptions.hours.includes(Number(currentDraft?.hours))
+    ? Number(currentDraft.hours)
+    : planning.quickOptions.defaultHours;
+  const nextPositionId = positionIds.has(currentDraft?.positionId)
+    ? currentDraft.positionId
+    : planning.quickOptions.defaultPositionId;
+
+  return {
+    hours: nextHours,
+    positionId: nextPositionId
+  };
+}
+
+async function refreshData(message = "Synchronisation des ecrans...") {
   const current = store.getState();
 
   if (!current.session) {
@@ -65,39 +89,41 @@ async function refreshData() {
 
   setState({
     dataBusy: true,
-    loadingMessage: "Synchronisation des ecrans..."
+    loadingMessage: message,
+    authError: ""
   });
 
   try {
-    const [dashboard, notifications, planning] = await Promise.all([
-      gateway.getDashboard(),
-      gateway.getNotifications(),
+    const [dashboard, interventions, planning] = await Promise.all([
+      gateway.getDashboard(current.selectedCenterId),
+      gateway.getInterventions(current.selectedCenterId),
       gateway.getPlanning()
     ]);
     const selectedCenterId = resolveSelectedCenterId(dashboard, current.selectedCenterId);
 
     setState({
       dashboard,
-      notifications,
+      interventions,
       planning,
+      planningDraft: createPlanningDraft(planning, current.planningDraft),
       selectedCenterId,
       dataBusy: false,
-      loadingMessage: ""
+      loadingMessage: "",
+      planningError: "",
+      planningMessage: current.planningMessage
     });
   } catch (error) {
     setState({
       dataBusy: false,
       loadingMessage: "",
       authError:
-        error instanceof Error
-          ? error.message
-          : "Impossible de synchroniser les donnees Orbe."
+        error instanceof Error ? error.message : "Impossible de synchroniser les donnees Orbia."
     });
   }
 }
 
 async function bootstrap() {
-  renderApp(root, store.getState());
+  render();
 
   try {
     let session = store.getState().session;
@@ -106,17 +132,15 @@ async function bootstrap() {
       session = await gateway.restoreSession();
     }
 
-    if (!session && mode === "mock") {
-      session = getPreviewSession();
-    }
-
     if (session) {
       setState({ session, authError: "" });
+
       if (getRoute() === "login") {
         goTo("cartes");
       } else {
         syncRoute();
       }
+
       await refreshData();
       return;
     }
@@ -125,15 +149,20 @@ async function bootstrap() {
       authError:
         error instanceof Error
           ? error.message
-          : "La session Orbe n'a pas pu etre restauree."
+          : "La session Orbia n'a pas pu etre restauree."
     });
   }
 
   goTo("login");
 }
 
-store.subscribe((state) => {
-  renderApp(root, state);
+function render() {
+  renderApp(root, store.getState());
+  syncInterventionsMap(root, store.getState());
+}
+
+store.subscribe(() => {
+  render();
 });
 
 window.addEventListener("hashchange", syncRoute);
@@ -179,7 +208,7 @@ root.addEventListener("click", async (event) => {
   }
 
   if (action === "refresh") {
-    await refreshData();
+    await refreshData("Rafraichissement des donnees...");
     return;
   }
 
@@ -188,60 +217,164 @@ root.addEventListener("click", async (event) => {
     setState({
       session: null,
       dashboard: null,
-      notifications: null,
+      interventions: null,
       planning: null,
+      planningDraft: null,
       authBusy: false,
       authError: "",
-      selectedCenterId: "villefranche-de-lauragais"
+      planningBusy: false,
+      planningError: "",
+      planningMessage: "",
+      selectedCenterId: "104"
     });
     goTo("login");
-  }
-});
-
-root.addEventListener("change", (event) => {
-  const select = event.target.closest("[data-field='selected-center']");
-
-  if (!select) {
     return;
   }
 
-  setState({ selectedCenterId: select.value });
+  if (action === "delete-planning-entry") {
+    const entryId = actionButton.dataset.entryId;
+
+    if (!entryId) {
+      return;
+    }
+
+    setState({
+      planningBusy: true,
+      planningError: "",
+      planningMessage: ""
+    });
+
+    try {
+      await gateway.deletePlanningEntry(entryId);
+      const planning = await gateway.getPlanning();
+      setState({
+        planning,
+        planningDraft: createPlanningDraft(planning, store.getState().planningDraft),
+        planningBusy: false,
+        planningError: "",
+        planningMessage: "Creneau supprime."
+      });
+    } catch (error) {
+      setState({
+        planningBusy: false,
+        planningError:
+          error instanceof Error ? error.message : "La deprogrammation a echoue.",
+        planningMessage: ""
+      });
+    }
+  }
+});
+
+root.addEventListener("change", async (event) => {
+  const centerSelect = event.target.closest("[data-field='selected-center']");
+
+  if (centerSelect) {
+    setState({
+      selectedCenterId: centerSelect.value,
+      planningMessage: "",
+      planningError: ""
+    });
+    await refreshData("Chargement du centre selectionne...");
+    return;
+  }
+
+  const planningPosition = event.target.closest("[data-field='planning-position']");
+
+  if (planningPosition) {
+    setState({
+      planningDraft: {
+        ...(store.getState().planningDraft || {}),
+        positionId: planningPosition.value
+      }
+    });
+  }
+
+  const hoursInput = event.target.closest("input[name='hours']");
+
+  if (hoursInput) {
+    setState({
+      planningDraft: {
+        ...(store.getState().planningDraft || {}),
+        hours: Number(hoursInput.value)
+      }
+    });
+  }
 });
 
 root.addEventListener("submit", async (event) => {
-  const form = event.target.closest("[data-form='login']");
+  const loginForm = event.target.closest("[data-form='login']");
 
-  if (!form) {
+  if (loginForm) {
+    event.preventDefault();
+
+    const formData = new FormData(loginForm);
+    const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
+
+    setState({
+      authBusy: true,
+      authError: ""
+    });
+
+    try {
+      const session = await gateway.signIn({ email, password });
+      setState({
+        session,
+        authBusy: false,
+        authError: ""
+      });
+      goTo("cartes");
+      await refreshData();
+    } catch (error) {
+      setState({
+        authBusy: false,
+        authError:
+          error instanceof Error
+            ? error.message
+            : "Connexion indisponible. Reessaie dans un instant."
+      });
+    }
+
+    return;
+  }
+
+  const quickShiftForm = event.target.closest("[data-form='quick-shift']");
+
+  if (!quickShiftForm) {
     return;
   }
 
   event.preventDefault();
 
-  const formData = new FormData(form);
-  const email = String(formData.get("email") || "").trim();
-  const password = String(formData.get("password") || "");
+  const formData = new FormData(quickShiftForm);
+  const hours = Number(formData.get("hours") || store.getState().planningDraft?.hours || 2);
+  const positionId = String(
+    formData.get("positionId") || store.getState().planningDraft?.positionId || ""
+  );
 
   setState({
-    authBusy: true,
-    authError: ""
+    planningBusy: true,
+    planningError: "",
+    planningMessage: ""
   });
 
   try {
-    const session = await gateway.signIn({ email, password });
+    const planning = await gateway.createQuickShift({ hours, positionId });
     setState({
-      session,
-      authBusy: false,
-      authError: ""
+      planning,
+      planningDraft: createPlanningDraft(planning, { hours, positionId }),
+      planningBusy: false,
+      planningError: "",
+      planningMessage: `Programme sur ${hours} h enregistre.`
     });
-    goTo("cartes");
-    await refreshData();
   } catch (error) {
     setState({
-      authBusy: false,
-      authError:
+      planningBusy: false,
+      planningError:
         error instanceof Error
           ? error.message
-          : "Connexion indisponible. Reessayez dans un instant."
+          : "La programmation n'a pas pu etre enregistree.",
+      planningMessage: ""
     });
   }
 });

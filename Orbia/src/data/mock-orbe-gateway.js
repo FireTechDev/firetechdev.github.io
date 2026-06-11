@@ -1,635 +1,523 @@
-const wait = (delay = 220) =>
+const wait = (delay = 180) =>
   new Promise((resolve) => {
     window.setTimeout(resolve, delay);
   });
 
+const SESSION_KEY = "orbia-mock-session";
+const PLANNING_KEY = "orbia-mock-planning";
+const NOW = new Date("2026-06-11T16:52:00+02:00");
+
+const mockSession = {
+  displayName: "Tael PINAULT",
+  email: "preview@orbia.local",
+  territory: "SDIS 31",
+  focusLabel: "Centre operationnel"
+};
+
 const dashboardFixture = {
-  defaultCenterId: "villefranche-de-lauragais",
-  profile: {
-    displayName: "Tael PINAULT",
-    role: "Coordination terrain",
-    territory: "SDIS 31",
-    focusLabel: "Statut operationnel"
-  },
+  profile: mockSession,
+  updatedAt: "16:52",
+  defaultCenterId: "104",
   centers: [
     {
-      id: "villefranche-de-lauragais",
-      name: "Villefranche-de-Lauragais",
-      stationLabel: "VILLEFRANCHE-LGAIS",
-      updatedAt: "16:14",
-      note:
-        "Vue prioritaire du centre. Les autres centres restent disponibles dans le menu pour comparaison.",
+      id: "104",
+      name: "VILLEFRANCHE-LGAIS",
+      stationLabel: "VILLEFRANC",
+      activeInterventions: 1,
+      last24hInterventions: 6
+    },
+    {
+      id: "89",
+      name: "REVEL",
+      stationLabel: "REVEL",
+      activeInterventions: 0,
+      last24hInterventions: 3
+    },
+    {
+      id: "75",
+      name: "CARAMAN",
+      stationLabel: "CARAMAN",
+      activeInterventions: 1,
+      last24hInterventions: 4
+    }
+  ],
+  views: {
+    "104": {
+      id: "104",
+      name: "VILLEFRANCHE-LGAIS",
+      stationLabel: "VILLEFRANC",
+      note: "Vue prioritaire du centre au chargement. Les autres centres restent accessibles depuis le select.",
+      armabilityPercent: 83,
       summary: {
         availableFirefighters: 5,
         armableVehicles: 2,
         currentInterventions: 1,
         last24hInterventions: 6
       },
-      availability: [
-        { key: "garde", label: "Garde", count: 0 },
-        { key: "astreinte", label: "Astreinte", count: 0 },
-        { key: "d1", label: "D1", count: 5 },
-        { key: "d2", label: "D2", count: 0 },
-        { key: "inter", label: "Inter", count: 0 }
+      statusChips: [
+        { key: "d1", label: "D1", count: 5 }
+      ],
+      crewGroups: [
+        {
+          key: "d1",
+          label: "D1",
+          count: 5,
+          firefighters: [
+            {
+              id: "vlf-1",
+              name: "Damien COSTES",
+              grade: "ADJ",
+              statusKey: "d1",
+              statusGroup: "D1",
+              statusLabel: "DISPO 1 CATE",
+              detail: "Dernier depart 09/06 15:05",
+              skillHighlights: ["CA INC", "CA SR", "COND VL"]
+            },
+            {
+              id: "vlf-2",
+              name: "Jean Baptiste TOULOUSE",
+              grade: "SGT",
+              statusKey: "d1",
+              statusGroup: "D1",
+              statusLabel: "DISPO 1 CA1E",
+              detail: "Dernier depart 06/06 15:06",
+              skillHighlights: ["CA SSUAP", "EQ INC", "COND VL"]
+            },
+            {
+              id: "vlf-3",
+              name: "Christophe MAUGER",
+              grade: "ADJ",
+              statusKey: "d1",
+              statusGroup: "D1",
+              statusLabel: "DISPO 1 CA1E",
+              detail: "Aucun depart recent",
+              skillHighlights: ["CA INC", "COD1", "COND PL"]
+            },
+            {
+              id: "vlf-4",
+              name: "Clement MOMI",
+              grade: "SAP1",
+              statusKey: "d1",
+              statusGroup: "D1",
+              statusLabel: "DISPO 1 EQ/CE",
+              detail: "Dernier depart 06/06 14:24",
+              skillHighlights: ["EQ SSUAP", "EQ INC", "EQ FDFEN"]
+            },
+            {
+              id: "vlf-5",
+              name: "Eric LARROQUE",
+              grade: "SGT",
+              statusKey: "d1",
+              statusGroup: "D1",
+              statusLabel: "DISPO 1 CA1E",
+              detail: "Dernier depart 16/04 10:55",
+              skillHighlights: ["CA SSUAP", "EQ INC", "COND VL"]
+            }
+          ]
+        }
+      ],
+      armabilities: [
+        {
+          name: "FPTSR",
+          status: "Armable",
+          description: "Optimal",
+          available: true,
+          availableRoles: 5,
+          totalRoles: 6,
+          percent: 83,
+          missingRoles: ["Equipier lutte contre l'incendie"],
+          roles: [
+            { code: "CE INC", label: "Chef d'equipe", available: true },
+            { code: "EQ INC", label: "Equipier", available: true },
+            { code: "EQ INC", label: "Equipier", available: false },
+            { code: "CA INC", label: "Chef d'agres", available: true },
+            { code: "COD1", label: "Conducteur", available: true }
+          ]
+        },
+        {
+          name: "VSAV",
+          status: "Armable",
+          description: "Complet",
+          available: true,
+          availableRoles: 3,
+          totalRoles: 3,
+          percent: 100,
+          missingRoles: [],
+          roles: [
+            { code: "CA SSUAP", label: "Chef d'agres", available: true },
+            { code: "COND VL", label: "Conducteur", available: true },
+            { code: "EQ SSUAP", label: "Equipier", available: true }
+          ]
+        }
       ],
       currentOperations: [
         {
-          title: "Assistance a personne",
-          since: "Depuis 14:18",
-          vehicle: "VSAV 1"
-        }
-      ],
-      firefighters: [
-        {
-          id: "vlf-1",
-          name: "Damien COSTES",
-          rank: "Adjudant",
-          status: "D1",
-          detail: "Chef d'agres VSAV disponible"
-        },
-        {
-          id: "vlf-2",
-          name: "Jean-Baptiste TOULOUSE",
-          rank: "Sergent",
-          status: "D1",
-          detail: "Disponible immediate sur depart SAP"
-        },
-        {
-          id: "vlf-3",
-          name: "Christophe MAUGER",
-          rank: "Adjudant",
-          status: "D1",
-          detail: "Renfort conducteur engageable"
-        },
-        {
-          id: "vlf-4",
-          name: "Clement MOMI",
-          rank: "Sapeur de 1re classe",
-          status: "D1",
-          detail: "Equipier pret a partir"
-        },
-        {
-          id: "vlf-5",
-          name: "Eric LARROQUE",
-          rank: "Sergent",
-          status: "D1",
-          detail: "Disponible jusqu'a la releve du soir"
-        }
-      ],
-      vehicles: [
-        {
-          id: "veh-vlf-1",
-          name: "VSAV 1",
-          status: "Armable",
-          detail: "Binome complet disponible"
-        },
-        {
-          id: "veh-vlf-2",
-          name: "FPT",
-          status: "Armable",
-          detail: "Chef d'agres et conducteur identifies"
-        },
-        {
-          id: "veh-vlf-3",
-          name: "VTU",
-          status: "A consolider",
-          detail: "Un equipier supplementaire utile"
+          id: "op-vlf",
+          title: "Secours a personne",
+          city: "Villefranche-de-Lauragais",
+          startTime: "2026-06-11T15:41:00+02:00",
+          startedAtLabel: "15:41",
+          vehicleCount: 1,
+          firefighterCount: 3,
+          color: "#0d7c71",
+          centers: ["VILLEFRANCHE-LGAIS"]
         }
       ]
     },
-    {
-      id: "revel",
-      name: "Revel",
+    "89": {
+      id: "89",
+      name: "REVEL",
       stationLabel: "REVEL",
-      updatedAt: "16:11",
       note: "Centre voisin pour comparer rapidement la profondeur de garde.",
+      armabilityPercent: 67,
       summary: {
         availableFirefighters: 4,
         armableVehicles: 1,
         currentInterventions: 0,
         last24hInterventions: 3
       },
-      availability: [
+      statusChips: [
         { key: "garde", label: "Garde", count: 1 },
         { key: "astreinte", label: "Astreinte", count: 2 },
-        { key: "d1", label: "D1", count: 1 },
-        { key: "d2", label: "D2", count: 0 },
-        { key: "inter", label: "Inter", count: 0 }
+        { key: "d1", label: "D1", count: 1 }
       ],
-      currentOperations: [],
-      firefighters: [
+      crewGroups: [
         {
-          id: "rev-1",
-          name: "Marion BOUDET",
-          rank: "Caporale",
-          status: "Garde",
-          detail: "Disponible au centre"
-        },
-        {
-          id: "rev-2",
-          name: "Julien PECH",
-          rank: "Sergent",
-          status: "Astreinte",
-          detail: "Reponse courte sur declenchement"
-        },
-        {
-          id: "rev-3",
-          name: "Cedric BRUN",
-          rank: "Caporal-chef",
-          status: "Astreinte",
-          detail: "Conducteur confirme"
-        },
-        {
-          id: "rev-4",
-          name: "Noemie LOPEZ",
-          rank: "Sapeur",
-          status: "D1",
-          detail: "Disponible immediate"
+          key: "garde",
+          label: "Garde",
+          count: 1,
+          firefighters: [
+            {
+              id: "rev-1",
+              name: "Marion BOUDET",
+              grade: "CPL",
+              statusKey: "garde",
+              statusGroup: "Garde",
+              statusLabel: "GARDE 12",
+              detail: "Disponible au centre",
+              skillHighlights: ["EQ SSUAP", "EQ INC"]
+            }
+          ]
         }
       ],
-      vehicles: [
+      armabilities: [
         {
-          id: "veh-rev-1",
           name: "VSAV",
           status: "Armable",
-          detail: "Depart possible sans renfort"
-        },
-        {
-          id: "veh-rev-2",
-          name: "CCF",
-          status: "A consolider",
-          detail: "Besoin d'un second equipier"
+          description: "Complet",
+          available: true,
+          availableRoles: 3,
+          totalRoles: 3,
+          percent: 100,
+          missingRoles: [],
+          roles: []
         }
-      ]
+      ],
+      currentOperations: []
     },
-    {
-      id: "caraman",
-      name: "Caraman",
+    "75": {
+      id: "75",
+      name: "CARAMAN",
       stationLabel: "CARAMAN",
-      updatedAt: "16:09",
-      note: "Reference secondaire utile en couverture est du secteur.",
+      note: "Lecture secondaire utile sur le secteur est.",
+      armabilityPercent: 72,
       summary: {
         availableFirefighters: 3,
         armableVehicles: 1,
-        currentInterventions: 0,
-        last24hInterventions: 2
-      },
-      availability: [
-        { key: "garde", label: "Garde", count: 0 },
-        { key: "astreinte", label: "Astreinte", count: 1 },
-        { key: "d1", label: "D1", count: 2 },
-        { key: "d2", label: "D2", count: 0 },
-        { key: "inter", label: "Inter", count: 0 }
-      ],
-      currentOperations: [],
-      firefighters: [
-        {
-          id: "car-1",
-          name: "Lucas ROUAIX",
-          rank: "Caporal",
-          status: "D1",
-          detail: "Disponible immediate"
-        },
-        {
-          id: "car-2",
-          name: "Anais FAURE",
-          rank: "Sapeure",
-          status: "D1",
-          detail: "Equipiere SAP"
-        },
-        {
-          id: "car-3",
-          name: "Fabien DOUAT",
-          rank: "Sergent",
-          status: "Astreinte",
-          detail: "Retour au centre en moins de 10 min"
-        }
-      ],
-      vehicles: [
-        {
-          id: "veh-car-1",
-          name: "VSAV",
-          status: "Armable",
-          detail: "Equipage minimum confirme"
-        }
-      ]
-    },
-    {
-      id: "ramonville",
-      name: "Ramonville",
-      stationLabel: "RAMONVILLE",
-      updatedAt: "16:07",
-      note: "Centre dense, utile pour suivre l'equilibre est de l'agglomeration.",
-      summary: {
-        availableFirefighters: 6,
-        armableVehicles: 2,
         currentInterventions: 1,
-        last24hInterventions: 7
+        last24hInterventions: 4
       },
-      availability: [
-        { key: "garde", label: "Garde", count: 2 },
-        { key: "astreinte", label: "Astreinte", count: 2 },
-        { key: "d1", label: "D1", count: 1 },
-        { key: "d2", label: "D2", count: 0 },
-        { key: "inter", label: "Inter", count: 1 }
+      statusChips: [
+        { key: "astreinte", label: "Astreinte", count: 1 },
+        { key: "d1", label: "D1", count: 2 }
+      ],
+      crewGroups: [
+        {
+          key: "d1",
+          label: "D1",
+          count: 2,
+          firefighters: [
+            {
+              id: "car-1",
+              name: "Lucas ROUAIX",
+              grade: "CPL",
+              statusKey: "d1",
+              statusGroup: "D1",
+              statusLabel: "DISPO 1 EQ/CE",
+              detail: "Disponible immediate",
+              skillHighlights: ["EQ INC", "EQ SSUAP"]
+            },
+            {
+              id: "car-2",
+              name: "Anais FAURE",
+              grade: "SAP",
+              statusKey: "d1",
+              statusGroup: "D1",
+              statusLabel: "DISPO 1 EQ/CE",
+              detail: "Disponible immediate",
+              skillHighlights: ["EQ INC", "EQ FDFEN"]
+            }
+          ]
+        }
+      ],
+      armabilities: [
+        {
+          name: "VTU",
+          status: "Armable",
+          description: "Correct",
+          available: true,
+          availableRoles: 2,
+          totalRoles: 3,
+          percent: 67,
+          missingRoles: ["Conducteur"],
+          roles: []
+        }
       ],
       currentOperations: [
         {
+          id: "op-car",
           title: "Feu de vegetation",
-          since: "Depuis 15:02",
-          vehicle: "CCF"
-        }
-      ],
-      firefighters: [
-        {
-          id: "ram-1",
-          name: "Hugo PLANEL",
-          rank: "Caporal",
-          status: "Garde",
-          detail: "Disponible au centre"
-        },
-        {
-          id: "ram-2",
-          name: "Melanie RIVALS",
-          rank: "Adjudante",
-          status: "Garde",
-          detail: "Chef d'agres disponible"
-        },
-        {
-          id: "ram-3",
-          name: "Nicolas FERRAN",
-          rank: "Sergent",
-          status: "Astreinte",
-          detail: "Depart possible sous 8 min"
-        },
-        {
-          id: "ram-4",
-          name: "Romain PAGES",
-          rank: "Sapeur",
-          status: "Astreinte",
-          detail: "Renfort conducteur"
-        },
-        {
-          id: "ram-5",
-          name: "Sarah CALMET",
-          rank: "Caporale",
-          status: "D1",
-          detail: "Disponible immediate"
-        },
-        {
-          id: "ram-6",
-          name: "Lina VIGUIE",
-          rank: "Sapeure",
-          status: "Inter",
-          detail: "Deja engagee sur intervention"
-        }
-      ],
-      vehicles: [
-        {
-          id: "veh-ram-1",
-          name: "VSAV",
-          status: "Armable",
-          detail: "Depart SAP sans delai"
-        },
-        {
-          id: "veh-ram-2",
-          name: "CCF",
-          status: "Armable",
-          detail: "Feu de vegetation actuellement engage"
-        }
-      ]
-    },
-    {
-      id: "muret-mass",
-      name: "Muret-Massat",
-      stationLabel: "MURET-MASS",
-      updatedAt: "16:05",
-      note: "Point de comparaison pour un centre bien arme sur la periode.",
-      summary: {
-        availableFirefighters: 8,
-        armableVehicles: 3,
-        currentInterventions: 2,
-        last24hInterventions: 10
-      },
-      availability: [
-        { key: "garde", label: "Garde", count: 2 },
-        { key: "astreinte", label: "Astreinte", count: 3 },
-        { key: "d1", label: "D1", count: 2 },
-        { key: "d2", label: "D2", count: 0 },
-        { key: "inter", label: "Inter", count: 1 }
-      ],
-      currentOperations: [
-        {
-          title: "Accident routier",
-          since: "Depuis 15:34",
-          vehicle: "VSAV 2"
-        },
-        {
-          title: "Reconnaissance fumee",
-          since: "Depuis 13:52",
-          vehicle: "FPT"
-        }
-      ],
-      firefighters: [
-        {
-          id: "mur-1",
-          name: "Thomas SEGURA",
-          rank: "Adjudant",
-          status: "Garde",
-          detail: "Chef d'agres incendie"
-        },
-        {
-          id: "mur-2",
-          name: "Eva MILHAU",
-          rank: "Caporale",
-          status: "Garde",
-          detail: "Disponible au centre"
-        },
-        {
-          id: "mur-3",
-          name: "Louis MARTY",
-          rank: "Sergent",
-          status: "Astreinte",
-          detail: "Conducteur conforte"
-        },
-        {
-          id: "mur-4",
-          name: "Helene FERAL",
-          rank: "Caporale-cheffe",
-          status: "Astreinte",
-          detail: "Disponible SAP"
-        },
-        {
-          id: "mur-5",
-          name: "Mehdi HADDAD",
-          rank: "Sapeur",
-          status: "Astreinte",
-          detail: "Reponse rapide"
-        },
-        {
-          id: "mur-6",
-          name: "Leo GINESTET",
-          rank: "Caporal",
-          status: "D1",
-          detail: "Disponible immediate"
-        },
-        {
-          id: "mur-7",
-          name: "Claire BERTRAND",
-          rank: "Sapeure",
-          status: "D1",
-          detail: "Equipiere polyvalente"
-        },
-        {
-          id: "mur-8",
-          name: "Nora DANIEL",
-          rank: "Sapeure",
-          status: "Inter",
-          detail: "Engagee sur reconnaissance"
-        }
-      ],
-      vehicles: [
-        {
-          id: "veh-mur-1",
-          name: "VSAV 2",
-          status: "Armable",
-          detail: "Equipage maintenu malgre un depart"
-        },
-        {
-          id: "veh-mur-2",
-          name: "FPT",
-          status: "Armable",
-          detail: "Depart incendie encore possible"
-        },
-        {
-          id: "veh-mur-3",
-          name: "VL",
-          status: "Armable",
-          detail: "Chef de groupe disponible"
-        }
-      ]
-    },
-    {
-      id: "colomiers",
-      name: "Colomiers",
-      stationLabel: "COLOMIERS",
-      updatedAt: "16:03",
-      note: "Point d'appui secondaire pour l'ouest toulousain.",
-      summary: {
-        availableFirefighters: 7,
-        armableVehicles: 2,
-        currentInterventions: 1,
-        last24hInterventions: 11
-      },
-      availability: [
-        { key: "garde", label: "Garde", count: 3 },
-        { key: "astreinte", label: "Astreinte", count: 1 },
-        { key: "d1", label: "D1", count: 2 },
-        { key: "d2", label: "D2", count: 0 },
-        { key: "inter", label: "Inter", count: 1 }
-      ],
-      currentOperations: [
-        {
-          title: "Secours a victime",
-          since: "Depuis 15:47",
-          vehicle: "VSAV"
-        }
-      ],
-      firefighters: [
-        {
-          id: "col-1",
-          name: "Camille ALAUX",
-          rank: "Adjudante",
-          status: "Garde",
-          detail: "Chef d'agres disponible"
-        },
-        {
-          id: "col-2",
-          name: "Samuel NIEL",
-          rank: "Caporal",
-          status: "Garde",
-          detail: "Disponible au centre"
-        },
-        {
-          id: "col-3",
-          name: "Julie AMAT",
-          rank: "Sapeure",
-          status: "Garde",
-          detail: "Equipiere SAP"
-        },
-        {
-          id: "col-4",
-          name: "Alexis BARAT",
-          rank: "Sergent",
-          status: "Astreinte",
-          detail: "Renfort incendie"
-        },
-        {
-          id: "col-5",
-          name: "Ludovic PASSERON",
-          rank: "Caporal-chef",
-          status: "D1",
-          detail: "Disponible immediate"
-        },
-        {
-          id: "col-6",
-          name: "Marie LAGARD",
-          rank: "Sapeure",
-          status: "D1",
-          detail: "Disponible immediate"
-        },
-        {
-          id: "col-7",
-          name: "Antoine REGIS",
-          rank: "Sapeur",
-          status: "Inter",
-          detail: "Deja engage sur SAP"
-        }
-      ],
-      vehicles: [
-        {
-          id: "veh-col-1",
-          name: "VSAV",
-          status: "Armable",
-          detail: "Rotation equipe en cours"
-        },
-        {
-          id: "veh-col-2",
-          name: "FPT",
-          status: "Armable",
-          detail: "Chef d'agres et conducteur disponibles"
+          city: "Caraman",
+          startTime: "2026-06-11T14:58:00+02:00",
+          startedAtLabel: "14:58",
+          vehicleCount: 1,
+          firefighterCount: 4,
+          color: "#d97d1b",
+          centers: ["CARAMAN"]
         }
       ]
     }
-  ]
+  }
 };
 
-const notificationsFixture = {
-  counters: [
-    { label: "Prioritaires", value: 3 },
-    { label: "En attente", value: 7 },
-    { label: "Cloturees aujourd'hui", value: 14 }
-  ],
-  items: [
+const interventionsFixture = {
+  updatedAt: "16:52",
+  activeCount: 3,
+  centerActiveCount: 1,
+  incidents: [
     {
-      id: "notif-1",
-      level: "critical",
-      title: "COLOMIERS - VSAV incomplet",
-      category: "Alerte operationnelle",
-      time: "Il y a 3 min",
-      body: "Un equipier manque sur le prochain depart. Validation du renfort attendue."
+      id: "mock-op-1",
+      title: "Secours a personne",
+      city: "Villefranche-de-Lauragais",
+      startTime: "2026-06-11T15:41:00+02:00",
+      startedAtLabel: "15:41",
+      vehicleCount: 1,
+      firefighterCount: 3,
+      color: "#0d7c71",
+      gps: { lat: 43.4019, lng: 1.7169 },
+      centers: ["VILLEFRANCHE-LGAIS"]
     },
     {
-      id: "notif-2",
-      level: "warning",
-      title: "TOULOUSE-A - Competence lots confirmee",
-      category: "Confirmation",
-      time: "Il y a 12 min",
-      body: "Le tableau des competences a ete mis a jour suite a la releve de quart."
+      id: "mock-op-2",
+      title: "Feu de vegetation",
+      city: "Caraman",
+      startTime: "2026-06-11T14:58:00+02:00",
+      startedAtLabel: "14:58",
+      vehicleCount: 1,
+      firefighterCount: 4,
+      color: "#d97d1b",
+      gps: { lat: 43.5308, lng: 1.7554 },
+      centers: ["CARAMAN"]
     },
     {
-      id: "notif-3",
-      level: "info",
-      title: "Secteur sud - Synoptique rafraichi",
-      category: "Information",
-      time: "Il y a 19 min",
-      body: "Les donnees de disponibilite ont ete synchronisees avec les derniers retours centres."
-    },
-    {
-      id: "notif-4",
-      level: "warning",
-      title: "REVEL - Armement a confirmer",
-      category: "Suivi",
-      time: "Il y a 31 min",
-      body: "Une verification terrain est attendue avant cloture de la notification."
+      id: "mock-op-3",
+      title: "Fuite de gaz",
+      city: "Ayguesvives",
+      startTime: "2026-06-11T16:08:00+02:00",
+      startedAtLabel: "16:08",
+      vehicleCount: 2,
+      firefighterCount: 5,
+      color: "#b34646",
+      gps: { lat: 43.4345, lng: 1.5992 },
+      centers: ["MONTGISCARD", "VILLEFRANCHE-LGAIS"]
     }
   ]
 };
 
 const planningFixture = {
-  nextShift: {
-    title: "Prochaine releve",
-    date: "Vendredi 12 juin",
-    time: "07:00 - 19:00",
-    team: "Equipe Nord",
-    detail: "Point de bascule sur les centres sensibles a 06:45"
+  updatedAt: "16:52",
+  current: {
+    short: "ND",
+    label: "Non declenchable",
+    structureCode: "031-VILLEFRANC",
+    availableNow: 5,
+    totalPool: 59
   },
-  segments: [
-    { label: "Aujourd'hui", value: "2 prises de garde" },
-    { label: "Cette semaine", value: "6 presences prevues" },
-    { label: "Remplacements", value: "1 a arbitrer" }
-  ],
-  roster: [
+  quickOptions: {
+    enabled: true,
+    hours: [1, 2, 3, 4, 5, 6],
+    defaultHours: 2,
+    maxDurationDays: 7,
+    affectationId: "65a249ec-d08a-4380-b7ec-67522f5fdda3",
+    availabilityCode: "DISPONIBLE_8",
+    availabilityShort: "D8",
+    availabilityLabel: "Disponibilite",
+    defaultPositionId: "40b49f22-96da-462a-8109-a074016b7a59",
+    positions: [
+      {
+        id: "40b49f22-96da-462a-8109-a074016b7a59",
+        code: "D1E",
+        label: "DISPO 1 EQ/CE"
+      },
+      {
+        id: "2b1a79ab-dca9-4f30-a6c8-a9f4cdc07171",
+        code: "D1A",
+        label: "DISPO 1 CA1E"
+      },
+      {
+        id: "79d16d45-4a00-48b2-8661-a77a5fa73e0d",
+        code: "D1T",
+        label: "DISPO 1 CATE"
+      }
+    ]
+  },
+  entries: [
     {
-      id: "plan-1",
-      when: "Aujourd'hui - 18:30",
-      title: "Verification des armements critiques",
-      place: "COLOMIERS / TOULOUSE-A",
-      status: "important"
-    },
-    {
-      id: "plan-2",
-      when: "Demain - 06:45",
-      title: "Brief releve de garde",
-      place: "MURET-MASS",
-      status: "standard"
-    },
-    {
-      id: "plan-3",
-      when: "Samedi - 09:15",
-      title: "Controle competences specialistes",
-      place: "RAMONVILLE",
-      status: "standard"
+      id: "entry-1",
+      startTime: "2026-06-11T18:00:00+02:00",
+      endTime: "2026-06-11T20:00:00+02:00",
+      startLabel: "11/06 18:00",
+      endLabel: "11/06 20:00",
+      durationHours: 2,
+      centerName: "VILLEFRANCHE-LGAIS",
+      availabilityShort: "D8",
+      availabilityCode: "DISPONIBLE_8",
+      positionCode: "D1T",
+      positionLabel: "DISPO 1 CATE",
+      isFuture: true,
+      canDelete: true
     }
   ]
 };
 
-export class MockOrbeGateway {
-  constructor() {
-    this.sessionKey = "orbia-mock-session";
+function clone(value) {
+  return structuredClone(value);
+}
+
+function loadPlanningEntries() {
+  const raw = window.sessionStorage.getItem(PLANNING_KEY);
+
+  if (!raw) {
+    const seeded = clone(planningFixture.entries);
+    window.sessionStorage.setItem(PLANNING_KEY, JSON.stringify(seeded));
+    return seeded;
   }
 
-  async restoreSession() {
-    await wait(140);
+  return JSON.parse(raw);
+}
 
-    const raw = window.sessionStorage.getItem(this.sessionKey);
+function savePlanningEntries(entries) {
+  window.sessionStorage.setItem(PLANNING_KEY, JSON.stringify(entries));
+}
+
+function formatDateTime(dateLike) {
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(dateLike));
+}
+
+export class MockOrbeGateway {
+  async restoreSession() {
+    await wait(120);
+    const raw = window.sessionStorage.getItem(SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   }
 
   async signIn({ email, password }) {
-    await wait(260);
+    await wait(220);
 
     if (!email || !password) {
-      throw new Error("Renseignez votre email et votre mot de passe.");
+      throw new Error("Renseigne ton email et ton mot de passe.");
     }
 
-    const session = {
-      displayName: "Tael PINAULT",
-      email,
-      territory: "SDIS 31"
-    };
-
-    window.sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
-    return session;
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(mockSession));
+    return clone(mockSession);
   }
 
   async signOut() {
-    await wait(120);
-    window.sessionStorage.removeItem(this.sessionKey);
+    await wait(100);
+    window.sessionStorage.removeItem(SESSION_KEY);
   }
 
-  async getDashboard() {
-    await wait(180);
-    return structuredClone(dashboardFixture);
-  }
-
-  async getNotifications() {
+  async getDashboard(centerId = dashboardFixture.defaultCenterId) {
     await wait(160);
-    return structuredClone(notificationsFixture);
+    const id = String(centerId || dashboardFixture.defaultCenterId);
+    const centerView =
+      dashboardFixture.views[id] || dashboardFixture.views[dashboardFixture.defaultCenterId];
+
+    return {
+      profile: clone(dashboardFixture.profile),
+      updatedAt: dashboardFixture.updatedAt,
+      defaultCenterId: dashboardFixture.defaultCenterId,
+      centers: clone(dashboardFixture.centers),
+      center: clone(centerView)
+    };
+  }
+
+  async getInterventions(centerId = dashboardFixture.defaultCenterId) {
+    await wait(160);
+    const selectedCenter =
+      dashboardFixture.centers.find((item) => item.id === String(centerId)) ||
+      dashboardFixture.centers.find((item) => item.id === dashboardFixture.defaultCenterId);
+
+    return {
+      ...clone(interventionsFixture),
+      centerActiveCount: interventionsFixture.incidents.filter((incident) =>
+        incident.centers.includes(selectedCenter.name)
+      ).length
+    };
   }
 
   async getPlanning() {
-    await wait(160);
-    return structuredClone(planningFixture);
+    await wait(150);
+    const entries = loadPlanningEntries();
+
+    return {
+      ...clone(planningFixture),
+      entries: entries.map((entry) => ({
+        ...entry,
+        startLabel: formatDateTime(entry.startTime),
+        endLabel: formatDateTime(entry.endTime)
+      }))
+    };
+  }
+
+  async createQuickShift({ hours, positionId }) {
+    await wait(220);
+
+    const positions = planningFixture.quickOptions.positions;
+    const position =
+      positions.find((item) => item.id === positionId) || positions[0];
+
+    const start = new Date(NOW);
+    const end = new Date(start.getTime() + Number(hours || 2) * 3600000);
+    const entries = loadPlanningEntries();
+
+    entries.unshift({
+      id: crypto.randomUUID(),
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      durationHours: Number(hours || 2),
+      centerName: "VILLEFRANCHE-LGAIS",
+      availabilityShort: "D8",
+      availabilityCode: "DISPONIBLE_8",
+      positionCode: position.code,
+      positionLabel: position.label,
+      isFuture: true,
+      canDelete: true
+    });
+
+    savePlanningEntries(entries);
+    return this.getPlanning();
+  }
+
+  async deletePlanningEntry(entryId) {
+    await wait(180);
+    const entries = loadPlanningEntries().filter((entry) => entry.id !== entryId);
+    savePlanningEntries(entries);
+    return null;
   }
 }

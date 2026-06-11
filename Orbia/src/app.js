@@ -5,11 +5,11 @@ import { renderPlanningView } from "./views/planning-view.js";
 
 function icon(name) {
   const paths = {
-    cartes:
-      '<path d="M3 6.5L12 3l9 3.5v11L12 21 3 17.5v-11Z" /><path d="M12 3v18" /><path d="M3 6.5l9 3.5 9-3.5" />',
-    notifications:
-      '<path d="M12 3a4 4 0 0 1 4 4v2.5c0 .7.2 1.4.6 2l1.2 1.8c.5.8 0 1.7-.9 1.7H7.1c-.9 0-1.4-.9-.9-1.7l1.2-1.8c.4-.6.6-1.3.6-2V7a4 4 0 0 1 4-4Z" /><path d="M10 18a2 2 0 0 0 4 0" />',
-    planning:
+    centre:
+      '<path d="M4 10.5 12 4l8 6.5V20H4v-9.5Z" /><path d="M9.5 20v-5h5v5" />',
+    inters:
+      '<path d="M7 18h10" /><path d="m8 18 1.6-5.2A3.5 3.5 0 0 1 13 10h.4a3.5 3.5 0 0 1 3.4 2.8L18 18" /><path d="M11.1 10 9.8 6.8A1 1 0 0 1 10.7 5h2.6a1 1 0 0 1 .9 1.4L12.9 10" />',
+    dispo:
       '<rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6" />'
   };
 
@@ -21,23 +21,20 @@ function icon(name) {
 }
 
 function renderShell(state, view) {
-  const { route, session, mode, online, installPrompt, dataBusy, loadingMessage } = state;
+  const { route, session, mode, online, installPrompt, dataBusy, loadingMessage, authError } = state;
 
   return `
     <div class="app-shell">
-      <div class="ambient ambient--one"></div>
-      <div class="ambient ambient--two"></div>
-
       <header class="topbar">
         <div>
-          <p class="eyebrow">Bonjour</p>
+          <p class="eyebrow">Orbia terrain</p>
           <h1>${session.displayName}</h1>
         </div>
         <div class="topbar__actions">
           <span class="badge ${online ? "badge--soft" : "badge--warning"}">
             ${online ? "En ligne" : "Hors ligne"}
           </span>
-          <span class="badge badge--soft">Source ${mode}</span>
+          <span class="badge badge--soft">Source ${mode === "proxy" ? "reelle" : "mock"}</span>
         </div>
       </header>
 
@@ -46,9 +43,7 @@ function renderShell(state, view) {
           ? `
             <section class="screen-block">
               <button class="install-banner" data-action="install">
-                <span>
-                  Installer Orbia sur le mobile pour un acces plein ecran plus rapide.
-                </span>
+                <span>Installer Orbia pour un acces mobile plus direct.</span>
                 <strong>Installer</strong>
               </button>
             </section>
@@ -60,9 +55,21 @@ function renderShell(state, view) {
         dataBusy
           ? `
             <section class="screen-block">
-              <div class="panel panel--dense">
+              <div class="panel panel--dense panel--soft">
                 <p class="eyebrow">Synchronisation</p>
                 <strong>${loadingMessage}</strong>
+              </div>
+            </section>
+          `
+          : ""
+      }
+
+      ${
+        authError
+          ? `
+            <section class="screen-block">
+              <div class="panel panel--dense">
+                <p class="inline-message inline-message--error">${authError}</p>
               </div>
             </section>
           `
@@ -75,16 +82,16 @@ function renderShell(state, view) {
 
       <nav class="tabbar" aria-label="Navigation principale">
         <button class="tabbar__item ${route === "cartes" ? "tabbar__item--active" : ""}" data-route="cartes">
-          ${icon("cartes")}
-          <span>Statut</span>
+          ${icon("centre")}
+          <span>Centre</span>
         </button>
         <button class="tabbar__item ${route === "notifications" ? "tabbar__item--active" : ""}" data-route="notifications">
-          ${icon("notifications")}
-          <span>Notifications</span>
+          ${icon("inters")}
+          <span>Inters</span>
         </button>
         <button class="tabbar__item ${route === "planning" ? "tabbar__item--active" : ""}" data-route="planning">
-          ${icon("planning")}
-          <span>Planning</span>
+          ${icon("dispo")}
+          <span>Ma dispo</span>
         </button>
       </nav>
 
@@ -102,13 +109,13 @@ function renderShell(state, view) {
 }
 
 export function renderApp(root, state) {
-  let view = "";
-
   if (!state.session) {
-    view = renderLoginView(state);
+    const view = renderLoginView(state);
     root.innerHTML = `<div class="app-shell app-shell--login">${view}</div>`;
     return;
   }
+
+  let view = "";
 
   if (state.route === "notifications") {
     view = renderNotificationsView(state);
