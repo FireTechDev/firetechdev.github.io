@@ -21,6 +21,14 @@ const ALLOWED_ORIGINS = new Set(
 const PROJECT_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const DEFAULT_CENTER_ID = 104;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ORBIA_ACCESS_CODE = String(process.env.ORBIA_ACCESS_CODE || "").trim();
+const ACCESS_REQUIRED = Boolean(ORBIA_ACCESS_CODE);
+const ACCESS_COOKIE_NAME = process.env.ACCESS_COOKIE_NAME || "orbia_access";
+const RAW_ACCESS_TTL_MS = Number(process.env.ORBIA_ACCESS_TTL_MS || 30 * ONE_DAY_MS);
+const ACCESS_TTL_MS = Number.isFinite(RAW_ACCESS_TTL_MS)
+  ? RAW_ACCESS_TTL_MS
+  : 30 * ONE_DAY_MS;
+const accessGrants = new Map();
 const sessions = new Map();
 
 const MIME_TYPES = {
@@ -198,6 +206,15 @@ function parseCookies(header = "") {
     }, {});
 }
 
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function sameOriginAllowed(origin) {
   return origin && ALLOWED_ORIGINS.has(origin);
 }
@@ -229,6 +246,20 @@ function writeNoContent(request, response, status = 204) {
 }
 
 async function readJsonBody(request) {
+  const text = await readTextBody(request);
+
+  if (!text) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new HttpError(400, "Le corps JSON est invalide.");
+  }
+}
+
+async function readTextBody(request) {
   const chunks = [];
 
   for await (const chunk of request) {
@@ -236,14 +267,10 @@ async function readJsonBody(request) {
   }
 
   if (!chunks.length) {
-    return {};
+    return "";
   }
 
-  try {
-    return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
-  } catch {
-    throw new HttpError(400, "Le corps JSON est invalide.");
-  }
+  return Buffer.concat(chunks).toString("utf-8");
 }
 
 function parseMaybeJson(text) {
@@ -425,6 +452,64 @@ function clearSessionCookie(response) {
     "HttpOnly",
     "Path=/",
     "Max-Age=0",
+    `SameSite=${COOKIE_SAME_SITE}`
+  ];
+
+  if (COOKIE_SECURE) {
+    attributes.push("Secure");
+  }
+
+  response.setHeader("Set-Cookie", attributes.join("; "));
+}
+
+function accessIdFromRequest(request) {
+  const cookies = parseCookies(request.headers.cookie || "");
+  return cookies[ACCESS_COOKIE_NAME];
+}
+
+function cleanupExpiredAccessGrants() {
+  const now = Date.now();
+
+  for (const [accessId, grant] of accessGrants.entries()) {
+    if (!grant || grant.expiresAt <= now) {
+      accessGrants.delete(accessId);
+    }
+  }
+}
+
+function hasAccessGrant(request) {
+  if (!ACCESS_REQUIRED) {
+    return true;
+  }
+
+  cleanupExpiredAccessGrants();
+  const accessId = accessIdFromRequest(request);
+  const grant = accessId ? accessGrants.get(accessId) : null;
+  return Boolean(grant && grant.expiresAt > Date.now());
+}
+
+function requireAccessGrant(request) {
+  if (!hasAccessGrant(request)) {
+    throw new HttpError(401, "Code d'acces Orbia requis.");
+  }
+}
+
+function createAccessGrant() {
+  cleanupExpiredAccessGrants();
+  const accessId = randomUUID();
+  accessGrants.set(accessId, {
+    createdAt: Date.now(),
+    expiresAt: Date.now() + ACCESS_TTL_MS
+  });
+  return accessId;
+}
+
+function setAccessCookie(response, accessId) {
+  const attributes = [
+    `${ACCESS_COOKIE_NAME}=${accessId}`,
+    "HttpOnly",
+    "Path=/",
+    `Max-Age=${Math.max(60, Math.floor(ACCESS_TTL_MS / 1000))}`,
     `SameSite=${COOKIE_SAME_SITE}`
   ];
 
@@ -1101,6 +1186,183 @@ async function deletePlanningEntry(record, entryId) {
   await client.request(`/api/me/planning/entry/${entryId}`, { method: "DELETE" });
 }
 
+function renderAccessGate(errorMessage = "") {
+  const error = errorMessage
+    ? `<p class="message message--error">${escapeHtml(errorMessage)}</p>`
+    : "";
+
+  return `<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Orbia - Acces prive</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f3f0;
+        --surface: #ffffff;
+        --ink: #27303a;
+        --ink-soft: #6a7481;
+        --brand: #4a8c78;
+        --brand-deep: #35705f;
+        --danger: #b54848;
+        font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(74, 140, 120, 0.2), transparent 30%),
+          linear-gradient(180deg, #d9ebe4 0%, var(--bg) 14rem, var(--bg) 100%);
+      }
+
+      main {
+        width: min(100%, 31rem);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding:
+          max(1.1rem, env(safe-area-inset-top))
+          1rem
+          max(1.1rem, env(safe-area-inset-bottom));
+        display: grid;
+        grid-template-rows: 1fr auto auto 1fr auto;
+        gap: 1rem;
+      }
+
+      header {
+        grid-row: 2;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2.2rem, 8vw, 3.4rem);
+        letter-spacing: -0.05em;
+      }
+
+      .subtitle {
+        margin: 0.25rem 0 0;
+        color: var(--ink-soft);
+        font-weight: 800;
+      }
+
+      form {
+        grid-row: 3;
+        padding: 1.15rem;
+        border-radius: 28px;
+        background: var(--surface);
+        box-shadow: 0 22px 40px rgba(33, 46, 53, 0.12);
+        display: grid;
+        gap: 1rem;
+      }
+
+      label {
+        display: grid;
+        gap: 0.45rem;
+        color: var(--ink-soft);
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+
+      input {
+        width: 100%;
+        min-height: 3.25rem;
+        padding: 0 1rem;
+        border: 1px solid rgba(39, 48, 58, 0.12);
+        border-radius: 18px;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      button {
+        min-height: 3.3rem;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+        color: #fff;
+        font: inherit;
+        font-weight: 800;
+      }
+
+      .message {
+        margin: 0;
+        color: var(--ink-soft);
+        line-height: 1.45;
+      }
+
+      .message--error {
+        color: var(--danger);
+      }
+
+      .disclaimer {
+        grid-row: 5;
+        margin: 0;
+        color: rgba(39, 48, 58, 0.58);
+        font-size: 0.68rem;
+        line-height: 1.42;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Orbia</h1>
+        <p class="subtitle">Acces prive</p>
+      </header>
+
+      <form method="post" action="/access" autocomplete="off">
+        <p class="message">Entre le code Orbia pour acceder au prototype.</p>
+        ${error}
+        <label>
+          Code d'acces
+          <input name="accessCode" type="password" autocomplete="current-password" required autofocus />
+        </label>
+        <button type="submit">Deverrouiller</button>
+      </form>
+
+      <p class="disclaimer">
+        Prototype prive d'etude d'interface utilisateur, sans affiliation avec Orbe ou AUM.
+        Acces reserve aux personnes autorisees. Toute automatisation abusive, extraction massive,
+        contournement de securite ou utilisation hors cadre autorise est interdite.
+      </p>
+    </main>
+  </body>
+</html>`;
+}
+
+function writeAccessGate(response, errorMessage = "", status = 200) {
+  response.writeHead(status, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "no-store"
+  });
+  response.end(renderAccessGate(errorMessage));
+}
+
+async function handleAccessForm(request, response) {
+  const body = await readTextBody(request);
+  const params = new URLSearchParams(body);
+  const accessCode = String(params.get("accessCode") || "").trim();
+
+  if (!accessCode || accessCode !== ORBIA_ACCESS_CODE) {
+    writeAccessGate(response, "Code d'acces incorrect.", 401);
+    return;
+  }
+
+  setAccessCookie(response, createAccessGrant());
+  response.writeHead(303, {
+    Location: "/",
+    "Cache-Control": "no-store"
+  });
+  response.end();
+}
+
 function resolveStaticPath(pathname) {
   const safePath = pathname === "/" ? "/index.html" : pathname;
   const normalizedPath = normalize(safePath).replace(/^(\.\.[/\\])+/, "");
@@ -1148,12 +1410,25 @@ async function handleApiRequest(request, response, url) {
 
   if (request.method === "GET" && url.pathname === "/api/health") {
     writeJson(request, response, 200, {
-      ok: true,
-      service: "orbia-bff",
-      orbeBaseUrl: ORBE_BASE_URL
+      ok: true
     });
     return;
   }
+
+  if (request.method === "POST" && url.pathname === "/api/access") {
+    const body = await readJsonBody(request);
+    const accessCode = String(body.accessCode || "").trim();
+
+    if (!ACCESS_REQUIRED || accessCode !== ORBIA_ACCESS_CODE) {
+      throw new HttpError(401, "Code d'acces Orbia incorrect.");
+    }
+
+    setAccessCookie(response, createAccessGrant());
+    writeJson(request, response, 200, { ok: true });
+    return;
+  }
+
+  requireAccessGrant(request);
 
   if (request.method === "POST" && url.pathname === "/api/session") {
     const body = await readJsonBody(request);
@@ -1296,6 +1571,11 @@ const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
 
   try {
+    if (ACCESS_REQUIRED && request.method === "POST" && url.pathname === "/access") {
+      await handleAccessForm(request, response);
+      return;
+    }
+
     if (url.pathname.startsWith("/api/")) {
       await handleApiRequest(request, response, url);
       return;
@@ -1303,6 +1583,11 @@ const server = createServer(async (request, response) => {
 
     if (request.method !== "GET" && request.method !== "HEAD") {
       throw new HttpError(405, "Methode non autorisee.");
+    }
+
+    if (ACCESS_REQUIRED && !hasAccessGrant(request)) {
+      writeAccessGate(response);
+      return;
     }
 
     await serveStaticFile(request, response, url.pathname);

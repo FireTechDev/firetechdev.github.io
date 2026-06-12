@@ -17,3 +17,5 @@ services:
         value: None
       - key: ORBE_BASE_URL
         value: https://orbe.aum.bio
+      - key: ORBIA_ACCESS_CODE
+        sync: false
