@@ -411,18 +411,11 @@ root.addEventListener("submit", async (event) => {
   const formData = new FormData(quickShiftForm);
   const currentDraft = store.getState().planningDraft || {};
 
-  if (currentDraft.availabilityMode === "unavailable") {
-    setState({
-      planningError: "La declaration d'indisponibilite sera branchee avec la vraie data Orbe.",
-      planningMessage: ""
-    });
-    return;
-  }
-
   const hours = Number(formData.get("hours") || currentDraft.hours || 2);
   const positionId = String(
     formData.get("positionId") || currentDraft.positionId || ""
   );
+  const availabilityMode = currentDraft.availabilityMode || "available";
 
   setState({
     planningBusy: true,
@@ -431,13 +424,16 @@ root.addEventListener("submit", async (event) => {
   });
 
   try {
-    const planning = await gateway.createQuickShift({ hours, positionId });
+    const planning = await gateway.createQuickShift({ availabilityMode, hours, positionId });
     setState({
       planning,
-      planningDraft: createPlanningDraft(planning, { ...currentDraft, hours, positionId }),
+      planningDraft: createPlanningDraft(planning, { ...currentDraft, availabilityMode, hours, positionId }),
       planningBusy: false,
       planningError: "",
-      planningMessage: `Programme sur ${hours} h enregistre.`
+      planningMessage:
+        availabilityMode === "unavailable"
+          ? `Indisponibilite sur ${hours} h enregistree.`
+          : `Programme sur ${hours} h enregistre.`
     });
   } catch (error) {
     setState({

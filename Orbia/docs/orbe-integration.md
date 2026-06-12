@@ -38,6 +38,18 @@ Ecriture :
 - `POST /api/nexsis/v1/disponibilites/demande`
 - `DELETE /api/me/planning/entry/:id`
 
+Payload officiel observe dans le service Angular Orbe pour `POST /api/nexsis/v1/disponibilites/demande` :
+
+```json
+{
+  "dateDeDebut": "2026-06-11T16:52:00.000Z",
+  "dateDeFin": "2026-06-11T20:52:00.000Z",
+  "idPositionAdministrative": null,
+  "idAffectation": "uuid-affectation",
+  "etatDisponibilite": "INDISPONIBLE_0"
+}
+```
+
 ## DTO exposes au frontend
 
 Le frontend ne parle plus directement le modele Orbe brut. Le BFF expose des DTO centres sur l'usage mobile :
@@ -50,6 +62,6 @@ L'objectif est d'avoir des objets stables, plus faciles a faire evoluer cote UI.
 
 ## Limites connues a ce stade
 
-- le flux `planning/quick-shift` est branche en best effort sur le payload Orbe observe dans les bundles et les donnees lues
+- le flux `planning/quick-shift` utilise le payload officiel Orbe observe dans les bundles publics le 11 juin 2026
 - le comptage `24 h` et la carte des inters reposent sur `GET /api/me/operations`, qui depend des droits reels du compte connecte
 - pour un deploiement public hors localhost, il faudra heberger le BFF sur un host HTTPS si le frontend reste sur un domaine distinct

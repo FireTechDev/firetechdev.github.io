@@ -259,12 +259,19 @@ export function renderPlanningView(state) {
   const position = selectedPosition(planning, draft);
   const positionLabel = position ? compactPositionLabel(position) : "Statut";
   const isUnavailableMode = draft.availabilityMode === "unavailable";
+  const periodLabel =
+    draft.periodMode === "hour"
+      ? `jusqu'a ${draft.endHour || "18:00"}`
+      : `${draft.hours || planning.quickOptions.defaultHours}h`;
   const actionLabel =
     isUnavailableMode
-      ? "Declarer indisponible"
+      ? `Declarer indisponible · ${periodLabel}`
       : draft.periodMode === "hour"
       ? `Declarer dispo · ${positionLabel} · jusqu'a ${draft.endHour || "18:00"}`
       : `Declarer dispo · ${positionLabel} · ${draft.hours || planning.quickOptions.defaultHours}h`;
+  const canSubmit = isUnavailableMode
+    ? planning.quickOptions.canDeclareUnavailable
+    : planning.quickOptions.canDeclareAvailable;
 
   return `
     <section class="screen-block">
@@ -305,12 +312,6 @@ export function renderPlanningView(state) {
           `
       }
 
-      ${
-        isUnavailableMode
-          ? `<p class="inline-message">La declaration d'indisponibilite sera branchee avec la vraie data Orbe.</p>`
-          : ""
-      }
-
       ${renderPeriodMode(draft)}
 
       <div class="panel">
@@ -335,14 +336,12 @@ export function renderPlanningView(state) {
       <button
         class="button button--primary button--large planning-submit"
         type="submit"
-        ${state.planningBusy || !planning.quickOptions.enabled || isUnavailableMode ? "disabled" : ""}
+        ${state.planningBusy || !canSubmit ? "disabled" : ""}
       >
         ${
           state.planningBusy
             ? "Programmation..."
-            : isUnavailableMode
-              ? "Declaration indispo a connecter"
-              : actionLabel
+            : actionLabel
         }
       </button>
     </form>

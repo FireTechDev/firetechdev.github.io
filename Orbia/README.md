@@ -74,3 +74,23 @@ En pratique :
 - `GitHub Pages` peut continuer a heberger le shell statique
 - il faut un backend Node ou serverless a cote pour le mode reel
 - le frontend peut viser ce backend via `?mode=proxy&apiBase=https://ton-backend/api`
+
+## Deployer le backend reel
+
+Le dossier contient un `Dockerfile` et un `render.yaml` pour lancer rapidement le BFF sur un host HTTPS.
+
+Variables utiles :
+
+- `NODE_ENV=production`
+- `HOST=0.0.0.0`
+- `PORT` fourni par l'hebergeur
+- `ALLOWED_ORIGINS=https://firetechdev.github.io`
+- `COOKIE_SECURE=true`
+- `COOKIE_SAME_SITE=None`
+- `ORBE_BASE_URL=https://orbe.aum.bio`
+
+Une fois le backend en ligne, ouvrir la PWA avec :
+
+```text
+https://firetechdev.github.io/Orbia/?mode=proxy&apiBase=https://ton-backend/api
+```

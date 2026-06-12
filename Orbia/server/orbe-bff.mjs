@@ -8,8 +8,10 @@ const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 8787);
 const ORBE_BASE_URL = process.env.ORBE_BASE_URL || "https://orbe.aum.bio";
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "orbia_session";
-const COOKIE_SAME_SITE = process.env.COOKIE_SAME_SITE || "Lax";
-const COOKIE_SECURE = String(process.env.COOKIE_SECURE || "").toLowerCase() === "true";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const COOKIE_SECURE =
+  String(process.env.COOKIE_SECURE || "").toLowerCase() === "true" || IS_PRODUCTION;
+const COOKIE_SAME_SITE = process.env.COOKIE_SAME_SITE || (COOKIE_SECURE ? "None" : "Lax");
 const ALLOWED_ORIGINS = new Set(
   (process.env.ALLOWED_ORIGINS || "http://localhost:8787,https://firetechdev.github.io")
     .split(",")
@@ -720,10 +722,13 @@ function mapInterventions(centers, operations, selectedCenterId) {
 function mapPlanning(levels, planningEntries, dateLimits) {
   const now = Date.now();
   const level = levels[0] || {};
+  const availabilityStatuses = level.structure?.etatsDisponibilitesPossibles || [];
   const availableStatus =
-    (level.structure?.etatsDisponibilitesPossibles || []).find(
+    availabilityStatuses.find(
       (status) => status.estDisponible && (status.positionsAdministrativesPossibles || []).length
     ) || null;
+  const unavailableStatus = selectAvailabilityStatus(level, "INDISPONIBLE_0", "unavailable");
+  const availablePositions = availableStatus?.positionsAdministrativesPossibles || [];
 
   const entries = [...planningEntries]
     .sort((left, right) => new Date(left.startTime).getTime() - new Date(right.startTime).getTime())
@@ -761,23 +766,56 @@ function mapPlanning(levels, planningEntries, dateLimits) {
       totalPool: level.structure?.effectifsDisponible?.totalDispo || 0
     },
     quickOptions: {
-      enabled: Boolean(availableStatus),
+      enabled: Boolean(availableStatus || unavailableStatus),
       hours: [1, 2, 3, 4, 5, 6],
       defaultHours: 2,
       maxDurationDays: dateLimits?.max_duration_days || 7,
       affectationId: level.idAffectation || null,
+      canDeclareAvailable: Boolean(availableStatus && availablePositions.length),
+      canDeclareUnavailable: Boolean(unavailableStatus),
       availabilityCode: availableStatus?.code || null,
       availabilityShort: availableStatus?.libelleCourt || null,
       availabilityLabel: availableStatus?.libelle || null,
-      positions: (availableStatus?.positionsAdministrativesPossibles || []).map((position) => ({
+      unavailableCode: unavailableStatus?.code || null,
+      unavailableShort: unavailableStatus?.libelleCourt || null,
+      unavailableLabel: unavailableStatus?.libelle || null,
+      positions: availablePositions.map((position) => ({
         id: position.idNexsis,
         code: position.code,
         label: position.libelle
       })),
-      defaultPositionId: availableStatus?.positionsAdministrativesPossibles?.[0]?.idNexsis || null
+      defaultPositionId: availablePositions[0]?.idNexsis || null
     },
     entries
   };
+}
+
+function selectAvailabilityStatus(level, requestedCode, mode = "available") {
+  const statuses = level.structure?.etatsDisponibilitesPossibles || [];
+  const normalizedRequestedCode = String(requestedCode || "").trim();
+
+  if (normalizedRequestedCode) {
+    const requested = statuses.find((status) => status.code === normalizedRequestedCode);
+
+    if (requested) {
+      return requested;
+    }
+  }
+
+  if (mode === "unavailable") {
+    return (
+      statuses.find((status) => status.code === "INDISPONIBLE_0") ||
+      statuses.find((status) => status.estDisponible === false) ||
+      statuses.find((status) => normalizeText(`${status.code || ""} ${status.libelle || ""}`).includes("INDISPONIBLE")) ||
+      null
+    );
+  }
+
+  return (
+    statuses.find(
+      (status) => status.estDisponible && (status.positionsAdministrativesPossibles || []).length
+    ) || null
+  );
 }
 
 async function loadDashboard(record, selectedCenterId) {
@@ -831,61 +869,49 @@ async function createQuickShift(record, payload) {
   }
 
   const client = new OrbeClient(record);
-  const [planningEntries, levels, centers] = await Promise.all([
-    client.request("/api/me/planning"),
-    client.request("/api/nexsis/v1/disponibilites/en-cours"),
-    client.request("/api/me/centers")
-  ]);
+  const levels = await client.request("/api/nexsis/v1/disponibilites/en-cours");
 
   const level = levels[0] || {};
-  const availability =
-    (level.structure?.etatsDisponibilitesPossibles || []).find(
-      (status) =>
-        status.code === (payload.availabilityCode || "DISPONIBLE_8") &&
-        (status.positionsAdministrativesPossibles || []).length
-    ) ||
-    (level.structure?.etatsDisponibilitesPossibles || []).find(
-      (status) => status.estDisponible && (status.positionsAdministrativesPossibles || []).length
-    );
+  const availabilityMode = payload.availabilityMode === "unavailable" ? "unavailable" : "available";
+  const availability = selectAvailabilityStatus(
+    level,
+    availabilityMode === "unavailable" ? payload.unavailableCode : payload.availabilityCode,
+    availabilityMode
+  );
 
   if (!availability) {
-    throw new HttpError(400, "Aucune disponibilite programmable n'est exposee par Orbe.");
+    throw new HttpError(
+      400,
+      availabilityMode === "unavailable"
+        ? "Aucune indisponibilite programmable n'est exposee par Orbe."
+        : "Aucune disponibilite programmable n'est exposee par Orbe."
+    );
   }
 
+  const availablePositions = availability.positionsAdministrativesPossibles || [];
   const position =
-    (availability.positionsAdministrativesPossibles || []).find(
+    availablePositions.find(
       (item) => item.idNexsis === payload.positionId
-    ) || availability.positionsAdministrativesPossibles?.[0];
+    ) || availablePositions[0];
 
-  if (!position) {
+  if (availablePositions.length && !position) {
     throw new HttpError(400, "Choisis un statut operationnel pour te programmer.");
+  }
+
+  if (!level.idAffectation) {
+    throw new HttpError(400, "Affectation Orbe introuvable pour cette session.");
   }
 
   const now = new Date();
   const end = new Date(now.getTime() + hours * 3600000);
-  const matchingEntry = [...planningEntries]
-    .reverse()
-    .find((entry) => entry.availabilityStatusCod === availability.code);
-  const matchingCenter =
-    centers.find((center) => center.cod === position.codeUf?.replace("031-", "")) ||
-    centers.find((center) => center.cod === level.structure?.code?.replace("031-", "")) ||
-    centers.find((center) => Number(center.idCenter) === DEFAULT_CENTER_ID) ||
-    centers[0];
 
+  // This mirrors Orbe's official Angular service for /nexsis/v1/disponibilites/demande.
   const requestBody = {
-    startTime: now.toISOString(),
-    endTime: end.toISOString(),
+    dateDeDebut: now.toISOString(),
+    dateDeFin: end.toISOString(),
+    idPositionAdministrative: position?.idNexsis ?? null,
     idAffectation: level.idAffectation,
-    availabilityStatusCod: availability.code,
-    availabilityStatusAbbrev: availability.libelleCourt,
-    availabilityStatusName: availability.libelle,
-    idAvailabilityStatus: matchingEntry?.idAvailabilityStatus || 12,
-    idPositionAdministrative: position.idNexsis,
-    positionAdministrativeCod: position.code,
-    positionAdministrativeLabel: position.libelle,
-    codeStructure: level.structure?.code,
-    centerName: matchingCenter?.name,
-    idCenter: matchingCenter?.idCenter
+    etatDisponibilite: availability.code
   };
 
   await client.request("/api/nexsis/v1/disponibilites/demande", {
@@ -943,6 +969,15 @@ async function serveStaticFile(request, response, pathname) {
 async function handleApiRequest(request, response, url) {
   if (request.method === "OPTIONS") {
     writeNoContent(request, response);
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/health") {
+    writeJson(request, response, 200, {
+      ok: true,
+      service: "orbia-bff",
+      orbeBaseUrl: ORBE_BASE_URL
+    });
     return;
   }
 

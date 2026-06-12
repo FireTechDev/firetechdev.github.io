@@ -637,9 +637,10 @@ export class MockOrbeGateway {
     };
   }
 
-  async createQuickShift({ hours, positionId }) {
+  async createQuickShift({ availabilityMode = "available", hours, positionId }) {
     await wait(220);
 
+    const isUnavailable = availabilityMode === "unavailable";
     const positions = planningFixture.quickOptions.positions;
     const position =
       positions.find((item) => item.id === positionId) || positions[0];
@@ -654,10 +655,10 @@ export class MockOrbeGateway {
       endTime: end.toISOString(),
       durationHours: Number(hours || 2),
       centerName: "VILLEFRANCHE-LGAIS",
-      availabilityShort: "D8",
-      availabilityCode: "DISPONIBLE_8",
-      positionCode: position.code,
-      positionLabel: position.label,
+      availabilityShort: isUnavailable ? "ND" : "D8",
+      availabilityCode: isUnavailable ? "INDISPONIBLE_0" : "DISPONIBLE_8",
+      positionCode: isUnavailable ? "INDISPO" : position.code,
+      positionLabel: isUnavailable ? "Indisponible" : position.label,
       isFuture: true,
       canDelete: true
     });
