@@ -1233,28 +1233,12 @@ function renderAccessGate(errorMessage = "") {
           1rem
           max(1.1rem, env(safe-area-inset-bottom));
         display: grid;
-        grid-template-rows: 1fr auto auto 1fr auto;
+        grid-template-rows: 1fr auto 1fr auto;
         gap: 1rem;
       }
 
-      header {
-        grid-row: 2;
-      }
-
-      h1 {
-        margin: 0;
-        font-size: clamp(2.2rem, 8vw, 3.4rem);
-        letter-spacing: -0.05em;
-      }
-
-      .subtitle {
-        margin: 0.25rem 0 0;
-        color: var(--ink-soft);
-        font-weight: 800;
-      }
-
       form {
-        grid-row: 3;
+        grid-row: 2;
         padding: 1.15rem;
         border-radius: 28px;
         background: var(--surface);
@@ -1302,7 +1286,7 @@ function renderAccessGate(errorMessage = "") {
       }
 
       .disclaimer {
-        grid-row: 5;
+        grid-row: 4;
         margin: 0;
         color: rgba(39, 48, 58, 0.58);
         font-size: 0.68rem;
@@ -1312,13 +1296,7 @@ function renderAccessGate(errorMessage = "") {
   </head>
   <body>
     <main>
-      <header>
-        <h1>Orbia</h1>
-        <p class="subtitle">Acces prive</p>
-      </header>
-
       <form method="post" action="/access" autocomplete="off">
-        <p class="message">Entre le code Orbia pour acceder au prototype.</p>
         ${error}
         <label>
           Code d'acces
@@ -1328,9 +1306,7 @@ function renderAccessGate(errorMessage = "") {
       </form>
 
       <p class="disclaimer">
-        Prototype prive d'etude d'interface utilisateur, sans affiliation avec Orbe ou AUM.
-        Acces reserve aux personnes autorisees. Toute automatisation abusive, extraction massive,
-        contournement de securite ou utilisation hors cadre autorise est interdite.
+        Prototype prive d'etude d'interface utilisateur
       </p>
     </main>
   </body>
