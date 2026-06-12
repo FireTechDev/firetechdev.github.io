@@ -598,12 +598,13 @@ function mapArmabilities(detailArmabilities = []) {
     const roles = armability.items || [];
     const availableRoles = roles.filter((item) => item.available).length;
     const totalRoles = roles.length;
+    const isFullyCovered = totalRoles > 0 && availableRoles >= totalRoles;
 
     return {
       name: armability.name,
-      status: armability.available ? "Armable" : "A completer",
+      status: isFullyCovered ? "Armable" : "Non armable",
       description: armability.description,
-      available: Boolean(armability.available),
+      available: isFullyCovered,
       availableRoles,
       totalRoles,
       percent: totalRoles ? Math.round((availableRoles / totalRoles) * 100) : 0,

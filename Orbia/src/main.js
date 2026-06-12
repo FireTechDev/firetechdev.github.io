@@ -33,6 +33,7 @@ const store = createStore({
   selectedCenterId: "104",
   authBusy: false,
   authError: "",
+  menuOpen: false,
   dataBusy: false,
   loadingMessage: "Chargement...",
   planningBusy: false,
@@ -201,6 +202,7 @@ root.addEventListener("click", async (event) => {
   const routeButton = event.target.closest("[data-route]");
 
   if (routeButton) {
+    setState({ menuOpen: false });
     goTo(routeButton.dataset.route || "cartes");
     return;
   }
@@ -208,10 +210,19 @@ root.addEventListener("click", async (event) => {
   const actionButton = event.target.closest("[data-action]");
 
   if (!actionButton) {
+    if (!event.target.closest(".topbar__menu-wrap") && store.getState().menuOpen) {
+      setState({ menuOpen: false });
+    }
+
     return;
   }
 
   const action = actionButton.dataset.action;
+
+  if (action === "open-menu") {
+    setState({ menuOpen: !store.getState().menuOpen });
+    return;
+  }
 
   if (action === "install") {
     const promptEvent = store.getState().installPrompt;
@@ -227,6 +238,7 @@ root.addEventListener("click", async (event) => {
   }
 
   if (action === "refresh") {
+    setState({ menuOpen: false });
     await refreshData("Rafraichissement des donnees...");
     return;
   }
@@ -244,6 +256,7 @@ root.addEventListener("click", async (event) => {
       planningBusy: false,
       planningError: "",
       planningMessage: "",
+      menuOpen: false,
       selectedCenterId: "104"
     });
     goTo("login");

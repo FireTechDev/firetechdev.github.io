@@ -170,7 +170,8 @@ button {
   box-shadow: 0 18px 34px rgba(39, 48, 58, 0.18);
 }
 
-.topbar__menu-wrap:focus-within .topbar__menu-panel {
+.topbar__menu-wrap:focus-within .topbar__menu-panel,
+.topbar__menu-panel--open {
   display: grid;
   gap: 0.25rem;
 }
@@ -1348,11 +1349,13 @@ button {
 .login-screen {
   width: 100%;
   display: grid;
-  align-content: center;
+  min-height: calc(100vh - 2.2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  grid-template-rows: 1fr auto auto 1fr auto;
   gap: 1rem;
 }
 
 .login-screen__hero {
+  grid-row: 2;
   padding-top: 0.8rem;
 }
 
@@ -1362,10 +1365,26 @@ button {
   font-weight: 900;
 }
 
+.login-screen__subtitle {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
 .panel--login {
+  grid-row: 3;
   display: grid;
   gap: 1rem;
   padding: 1.15rem;
+}
+
+.login-screen__disclaimer {
+  grid-row: 5;
+  margin: 0;
+  color: rgba(39, 48, 58, 0.58);
+  font-size: 0.68rem;
+  line-height: 1.42;
 }
 
 .empty-state {

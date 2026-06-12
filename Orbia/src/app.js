@@ -54,22 +54,27 @@ function renderUserAvatar(session, apiBase) {
         src="${avatarUrl}"
         alt=""
         loading="lazy"
-        onerror="this.hidden=true;this.nextElementSibling.hidden=false"
+        onerror="this.hidden=true"
       />
-      <span class="topbar__avatar topbar__avatar--fallback" hidden>${initials}</span>
     `;
   }
 
   return `<span class="topbar__avatar topbar__avatar--fallback">${initials}</span>`;
 }
 
-function renderTopbarMenu(mode) {
+function renderTopbarMenu(mode, menuOpen) {
   return `
     <div class="topbar__menu-wrap">
-      <button class="topbar__menu" data-action="open-menu" aria-label="Ouvrir le menu" aria-haspopup="menu">
+      <button
+        class="topbar__menu"
+        data-action="open-menu"
+        aria-label="Ouvrir le menu"
+        aria-haspopup="menu"
+        aria-expanded="${menuOpen ? "true" : "false"}"
+      >
         ${icon("menu")}
       </button>
-      <div class="topbar__menu-panel" role="menu">
+      <div class="topbar__menu-panel ${menuOpen ? "topbar__menu-panel--open" : ""}" role="menu">
         ${
           mode === "proxy"
             ? `<button class="topbar__menu-item" data-action="logout" role="menuitem">Sortir</button>`
@@ -81,7 +86,17 @@ function renderTopbarMenu(mode) {
 }
 
 function renderShell(state, view) {
-  const { route, session, mode, apiBase, installPrompt, dataBusy, loadingMessage, authError } = state;
+  const {
+    route,
+    session,
+    mode,
+    apiBase,
+    menuOpen,
+    installPrompt,
+    dataBusy,
+    loadingMessage,
+    authError
+  } = state;
 
   return `
     <div class="app-shell">
@@ -90,7 +105,7 @@ function renderShell(state, view) {
           ${renderUserAvatar(session, apiBase)}
           <h1>${session.displayName}</h1>
         </div>
-        ${renderTopbarMenu(mode)}
+        ${renderTopbarMenu(mode, menuOpen)}
       </header>
 
       ${

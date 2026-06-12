@@ -83,7 +83,7 @@ function renderVehicleCard(armability) {
       <div class="armability-card__topline">
         <strong>${armability.name}</strong>
         <span class="status-pill ${isReady ? "status-pill--ready" : "status-pill--watch"}">
-          ${isReady ? "Armable" : armability.status || "A completer"}
+          ${isReady ? "Armable" : armability.status || "Non armable"}
         </span>
       </div>
       <p>${armability.availableRoles}/${armability.totalRoles} pers.</p>

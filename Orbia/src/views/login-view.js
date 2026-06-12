@@ -5,6 +5,7 @@ export function renderLoginView(state) {
     <section class="login-screen">
       <div class="login-screen__hero">
         <h1>Orbia</h1>
+        <p class="login-screen__subtitle">Test UI uniquement</p>
       </div>
 
       <form class="panel panel--login" data-form="login">
@@ -43,6 +44,14 @@ export function renderLoginView(state) {
           ${authBusy ? "Connexion..." : "Se connecter"}
         </button>
       </form>
+
+      <p class="login-screen__disclaimer">
+        Prototype prive d'etude d'interface utilisateur, sans affiliation avec Orbe ou AUM.
+        Connexion reservee aux comptes autorises et aux essais manuels. Toute automatisation
+        abusive, extraction massive, contournement de securite ou utilisation hors cadre
+        autorise est interdite. Certaines actions realisees apres connexion peuvent etre
+        transmises au service Orbe sous la responsabilite de l'utilisateur connecte.
+      </p>
     </section>
   `;
 }
