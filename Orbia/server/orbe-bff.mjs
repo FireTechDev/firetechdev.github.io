@@ -167,7 +167,7 @@ function applyCorsHeaders(request, response) {
 
   response.setHeader("Access-Control-Allow-Origin", origin);
   response.setHeader("Access-Control-Allow-Credentials", "true");
-  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
   response.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
   response.setHeader("Vary", "Origin");
 }
@@ -355,9 +355,20 @@ function clearSessionCookie(response) {
   response.setHeader("Set-Cookie", attributes.join("; "));
 }
 
-function requireSessionRecord(request) {
+function sessionIdFromRequest(request) {
+  const authorization = request.headers.authorization || "";
+  const bearerPrefix = "Bearer ";
+
+  if (authorization.startsWith(bearerPrefix)) {
+    return authorization.slice(bearerPrefix.length).trim();
+  }
+
   const cookies = parseCookies(request.headers.cookie || "");
-  const sessionId = cookies[SESSION_COOKIE_NAME];
+  return cookies[SESSION_COOKIE_NAME];
+}
+
+function requireSessionRecord(request) {
+  const sessionId = sessionIdFromRequest(request);
   const record = sessionId ? sessions.get(sessionId) : null;
 
   if (!record) {
@@ -1006,22 +1017,27 @@ async function handleApiRequest(request, response, url) {
     sessions.set(record.id, record);
 
     applyCorsHeaders(request, response);
+    response.setHeader("Access-Control-Expose-Headers", "X-Orbia-Session");
+    response.setHeader("X-Orbia-Session", record.id);
     setSessionCookie(response, record.id);
     response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-    response.end(JSON.stringify(record.profile));
+    response.end(JSON.stringify({ profile: record.profile, sessionToken: record.id }));
     return;
   }
 
   if (request.method === "GET" && url.pathname === "/api/session") {
     const record = requireSessionRecord(request);
     await ensureActiveSession(record);
-    writeJson(request, response, 200, record.profile);
+    applyCorsHeaders(request, response);
+    response.setHeader("Access-Control-Expose-Headers", "X-Orbia-Session");
+    response.setHeader("X-Orbia-Session", record.id);
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    response.end(JSON.stringify({ profile: record.profile, sessionToken: record.id }));
     return;
   }
 
   if (request.method === "DELETE" && url.pathname === "/api/session") {
-    const cookies = parseCookies(request.headers.cookie || "");
-    const sessionId = cookies[SESSION_COOKIE_NAME];
+    const sessionId = sessionIdFromRequest(request);
     const record = sessionId ? sessions.get(sessionId) : null;
 
     if (record) {

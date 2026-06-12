@@ -78,6 +78,8 @@ En pratique :
 ## Deployer le backend reel
 
 Le dossier contient un `Dockerfile` et un `render.yaml` pour lancer rapidement le BFF sur un host HTTPS.
+Ce n'est pas forcement un serveur OVH : Render, Railway, Fly.io ou Cloudflare peuvent servir de backend manage.
+Le mobile n'a besoin que d'une URL HTTPS stable.
 
 Variables utiles :
 
@@ -94,3 +96,10 @@ Une fois le backend en ligne, ouvrir la PWA avec :
 ```text
 https://firetechdev.github.io/Orbia/?mode=proxy&apiBase=https://ton-backend/api
 ```
+
+Le frontend supporte deux modes de session :
+
+- cookie `orbia_session` quand l'API et la PWA sont sur un meme domaine
+- jeton `Authorization: Bearer ...` stocke localement quand l'API est sur un domaine manage different
+
+Le second mode evite de dependre des cookies tiers, ce qui est plus fiable sur mobile.
