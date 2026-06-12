@@ -1,26 +1,13 @@
 export function renderLoginView(state) {
-  const { authBusy, authError, mode } = state;
+  const { authBusy, authError } = state;
 
   return `
     <section class="login-screen">
       <div class="login-screen__hero">
-        <p class="eyebrow">PWA mobile-first</p>
         <h1>Orbia</h1>
-        <p class="lead">
-          Une surcouche mobile pour lire la garde, voir l'armabilite, se programmer vite et suivre les inters en cours.
-        </p>
-        <div class="hero-badges">
-          <span class="badge badge--soft">Mode ${mode === "proxy" ? "connecte" : "prototype"}</span>
-          <span class="badge badge--soft">Instalable sur mobile</span>
-        </div>
       </div>
 
       <form class="panel panel--login" data-form="login">
-        <div class="panel__header">
-          <p class="eyebrow">Connexion</p>
-          <h2>Acceder a l'espace terrain</h2>
-        </div>
-
         <label class="field">
           <span>Email</span>
           <input
@@ -47,13 +34,13 @@ export function renderLoginView(state) {
         ${
           authError
             ? `<p class="inline-message inline-message--error">${authError}</p>`
-            : `<p class="inline-message">${mode === "proxy" ? "Connexion Orbe via le relais Orbia." : "En mode mock, n'importe quelle combinaison non vide suffit."}</p>`
+            : ""
         }
 
         <button class="button button--primary button--large" type="submit" ${
           authBusy ? "disabled" : ""
         }>
-          ${authBusy ? "Connexion..." : "Entrer dans Orbia"}
+          ${authBusy ? "Connexion..." : "Se connecter"}
         </button>
       </form>
     </section>

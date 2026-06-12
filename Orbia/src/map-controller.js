@@ -70,6 +70,10 @@ export function syncInterventionsMap(root, state) {
 
   for (const incident of incidents) {
     const { lat, lng } = incident.gps;
+    const centers = incident.centers?.length ? incident.centers.join(" · ") : "Centre non precise";
+    const vehicles = incident.vehicleTypes?.length
+      ? incident.vehicleTypes.join(" · ")
+      : `${incident.vehicleCount} engin(s)`;
     const marker = window.L.circleMarker([lat, lng], {
       radius: 8,
       color: incident.color,
@@ -81,7 +85,9 @@ export function syncInterventionsMap(root, state) {
     marker.bindPopup(`
       <strong>${incident.title}</strong><br />
       ${incident.city}<br />
-      ${incident.firefighterCount} pompier(s) · ${incident.vehicleCount} engin(s)
+      ${incident.firefighterCount} pompier(s) · ${incident.vehicleCount} engin(s)<br />
+      CS : ${centers}<br />
+      Engins : ${vehicles}
     `);
 
     marker.addTo(markersLayer);

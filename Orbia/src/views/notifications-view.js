@@ -1,3 +1,10 @@
+const LEGEND_ITEMS = [
+  { kind: "Feu", color: "#b34646" },
+  { kind: "AVP", color: "#d88821" },
+  { kind: "SAV", color: "#3177cf" },
+  { kind: "Autre", color: "#4a8c78" }
+];
+
 function incidentKind(incident) {
   const title = `${incident.title || ""} ${incident.city || ""}`.toUpperCase();
 
@@ -35,15 +42,23 @@ function elapsedLabel(incident) {
 }
 
 function renderLegend(incidents) {
-  const kinds = [...new Set(incidents.map((incident) => incidentKind(incident)))];
+  const incidentsByKind = new Map();
 
-  return kinds
-    .map((kind) => {
-      const incident = incidents.find((item) => incidentKind(item) === kind);
+  for (const incident of incidents) {
+    const kind = incidentKind(incident);
+
+    if (!incidentsByKind.has(kind)) {
+      incidentsByKind.set(kind, incident);
+    }
+  }
+
+  return LEGEND_ITEMS
+    .map((item) => {
+      const incident = incidentsByKind.get(item.kind);
       return `
         <span>
-          <i style="--incident-color:${incident?.color || "#4a8c78"}"></i>
-          ${kind}
+          <i style="--incident-color:${incident?.color || item.color}"></i>
+          ${item.kind}
         </span>
       `;
     })
@@ -51,6 +66,11 @@ function renderLegend(incidents) {
 }
 
 function renderIncidentListItem(incident) {
+  const centers = incident.centers?.length ? incident.centers.join(" · ") : "Centre non precise";
+  const vehicles = incident.vehicleTypes?.length
+    ? incident.vehicleTypes.join(" · ")
+    : `${incident.vehicleCount} engin(s)`;
+
   return `
     <article class="incident-card incident-card--compact">
       <div class="incident-card__topline">
@@ -59,7 +79,7 @@ function renderIncidentListItem(incident) {
         <span>${incident.startedAtLabel}</span>
       </div>
       <p>${incident.city}</p>
-      <small>${incident.firefighterCount} pompier(s) · ${incident.vehicleCount} engin(s) · ${incident.centers.join(" · ")}</small>
+      <small>${incident.firefighterCount} pompier(s) · ${vehicles} · ${centers}</small>
     </article>
   `;
 }
@@ -104,7 +124,11 @@ export function renderNotificationsView(state) {
                   </div>
                   <div>
                     <span>${elapsedLabel(primaryIncident)}</span>
-                    <small>${primaryIncident.vehicleCount} engin(s)</small>
+                    <small>${
+                      primaryIncident.vehicleTypes?.length
+                        ? primaryIncident.vehicleTypes.join(" · ")
+                        : `${primaryIncident.vehicleCount} engin(s)`
+                    }</small>
                   </div>
                 </article>
               `

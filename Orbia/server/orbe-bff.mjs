@@ -104,8 +104,52 @@ function avatarCandidateUrl(value) {
   return "";
 }
 
+function idCandidate(value) {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return String(value);
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  return "";
+}
+
+function profileImageIdFromProfile(me) {
+  const user = me?.user || {};
+  const candidates = [
+    me?.id_user,
+    me?.idUser,
+    me?.id,
+    me?.userId,
+    me?.idUtilisateur,
+    user.id_user,
+    user.idUser,
+    user.id,
+    user.userId,
+    user.idUtilisateur
+  ];
+
+  for (const candidate of candidates) {
+    const id = idCandidate(candidate);
+
+    if (id) {
+      return id;
+    }
+  }
+
+  return "";
+}
+
 function avatarUrlFromProfile(me) {
   const user = me?.user || {};
+  const profileImageId = profileImageIdFromProfile(me);
+
+  if (profileImageId) {
+    return `./api/profile/image/${encodeURIComponent(profileImageId)}`;
+  }
+
   const candidates = [
     me?.avatarUrl,
     me?.photoUrl,
@@ -308,6 +352,42 @@ class OrbeClient {
 
     this.record.updatedAt = Date.now();
     return payload;
+  }
+
+  async fetchRaw(path, { method = "GET", searchParams } = {}) {
+    const url = new URL(path, ORBE_BASE_URL);
+
+    if (searchParams) {
+      for (const [key, value] of Object.entries(searchParams)) {
+        if (value !== undefined && value !== null && value !== "") {
+          url.searchParams.set(key, String(value));
+        }
+      }
+    }
+
+    const headers = {
+      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+    };
+
+    if (this.record.cookies.size) {
+      headers.Cookie = buildCookieHeader(this.record.cookies);
+    }
+
+    const response = await fetch(url, {
+      method,
+      headers,
+      redirect: "manual"
+    });
+
+    updateCookieJar(this.record.cookies, response);
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new OrbeHttpError(response.status, parseMaybeJson(text));
+    }
+
+    this.record.updatedAt = Date.now();
+    return response;
   }
 }
 
@@ -605,6 +685,54 @@ function operationsForCenter(operations, centerId) {
   );
 }
 
+function textCandidate(value) {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (value && typeof value === "object") {
+    return (
+      textCandidate(value.name) ||
+      textCandidate(value.libelle) ||
+      textCandidate(value.label) ||
+      textCandidate(value.cod) ||
+      textCandidate(value.code) ||
+      textCandidate(value.abbrev) ||
+      textCandidate(value.abbreviation)
+    );
+  }
+
+  return "";
+}
+
+function vehicleLabelFromOperationVehicle(vehicle) {
+  return (
+    textCandidate(vehicle.name) ||
+    textCandidate(vehicle.vehicleName) ||
+    textCandidate(vehicle.libelle) ||
+    textCandidate(vehicle.label) ||
+    textCandidate(vehicle.cod) ||
+    textCandidate(vehicle.code) ||
+    textCandidate(vehicle.vehicle) ||
+    textCandidate(vehicle.engin)
+  );
+}
+
+function vehicleTypeFromOperationVehicle(vehicle) {
+  return (
+    textCandidate(vehicle.vehicleType) ||
+    textCandidate(vehicle.vehicle_type) ||
+    textCandidate(vehicle.typeVehicle) ||
+    textCandidate(vehicle.type) ||
+    textCandidate(vehicle.category) ||
+    textCandidate(vehicle.kind)
+  );
+}
+
 function mapActiveOperations(operations, centers) {
   const centerNameLookup = new Map(centers.map((center) => [Number(center.idCenter), center.name]));
 
@@ -626,6 +754,37 @@ function mapActiveOperations(operations, centers) {
             .filter(Boolean)
         )
       ];
+      const vehicles = (operation.vehicles || []).map((vehicle) => {
+        const centerId = Number(vehicle.idCenter);
+
+        return {
+          label: vehicleLabelFromOperationVehicle(vehicle),
+          type: vehicleTypeFromOperationVehicle(vehicle),
+          centerId: Number.isFinite(centerId) ? centerId : null,
+          centerName:
+            centerNameLookup.get(centerId) ||
+            textCandidate(vehicle.centerName) ||
+            textCandidate(vehicle.center)
+        };
+      });
+      const vehicleTypes = [
+        ...new Set(vehicles.map((vehicle) => vehicle.type).filter(Boolean))
+      ];
+      const vehicleLabels = [
+        ...new Set(
+          vehicles
+            .map((vehicle) => vehicle.label || vehicle.type)
+            .filter(Boolean)
+        )
+      ];
+      const resolvedCenterNames = [
+        ...new Set(
+          [
+            ...centerNames,
+            ...vehicles.map((vehicle) => vehicle.centerName)
+          ].filter(Boolean)
+        )
+      ];
 
       return {
         id: String(operation.id),
@@ -633,12 +792,15 @@ function mapActiveOperations(operations, centers) {
         city: operation.city || "Secteur non precise",
         startTime: operation.startTime,
         startedAtLabel: formatClock(operation.startTime),
-        vehicleCount: operation.vehicleCount || (operation.vehicles || []).length,
+        vehicleCount: operation.vehicleCount || vehicles.length,
         firefighterCount: operation.firefighterCount || 0,
         color: operation.operationColor || "#0d7c71",
         gps,
         centerIds,
-        centers: centerNames
+        centers: resolvedCenterNames,
+        vehicleTypes,
+        vehicleLabels,
+        vehicles
       };
     })
     .sort((left, right) => new Date(right.startTime).getTime() - new Date(left.startTime).getTime());
@@ -1062,6 +1224,27 @@ async function handleApiRequest(request, response, url) {
 
   const record = requireSessionRecord(request);
   await ensureActiveSession(record);
+
+  if (request.method === "GET" && url.pathname.startsWith("/api/profile/image/")) {
+    const imageId = decodeURIComponent(url.pathname.split("/").pop() || "");
+
+    if (!imageId) {
+      throw new HttpError(400, "Image utilisateur manquante.");
+    }
+
+    const client = new OrbeClient(record);
+    const upstreamResponse = await client.fetchRaw(`/api/profile/image/${encodeURIComponent(imageId)}`);
+    const imageBuffer = Buffer.from(await upstreamResponse.arrayBuffer());
+
+    applyCorsHeaders(request, response);
+    response.writeHead(200, {
+      "Content-Type": upstreamResponse.headers.get("content-type") || "image/jpeg",
+      "Content-Length": String(imageBuffer.length),
+      "Cache-Control": "private, max-age=300"
+    });
+    response.end(imageBuffer);
+    return;
+  }
 
   if (request.method === "GET" && url.pathname === "/api/dashboard") {
     const payload = await loadDashboard(record, url.searchParams.get("centerId"));

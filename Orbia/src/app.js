@@ -31,34 +31,66 @@ function initialsFromName(name = "") {
     .join("");
 }
 
-function renderUserAvatar(session) {
-  if (session.avatarUrl) {
+function resolveAvatarUrl(avatarUrl = "", apiBase = "./api") {
+  if (!avatarUrl) {
+    return "";
+  }
+
+  if (avatarUrl.startsWith("./api/")) {
+    return `${apiBase.replace(/\/$/, "")}/${avatarUrl.slice("./api/".length)}`;
+  }
+
+  return avatarUrl;
+}
+
+function renderUserAvatar(session, apiBase) {
+  const initials = initialsFromName(session.displayName);
+  const avatarUrl = resolveAvatarUrl(session.avatarUrl, apiBase);
+
+  if (avatarUrl) {
     return `
       <img
         class="topbar__avatar"
-        src="${session.avatarUrl}"
+        src="${avatarUrl}"
         alt=""
         loading="lazy"
+        onerror="this.hidden=true;this.nextElementSibling.hidden=false"
       />
+      <span class="topbar__avatar topbar__avatar--fallback" hidden>${initials}</span>
     `;
   }
 
-  return `<span class="topbar__avatar topbar__avatar--fallback">${initialsFromName(session.displayName)}</span>`;
+  return `<span class="topbar__avatar topbar__avatar--fallback">${initials}</span>`;
+}
+
+function renderTopbarMenu(mode) {
+  return `
+    <div class="topbar__menu-wrap">
+      <button class="topbar__menu" data-action="open-menu" aria-label="Ouvrir le menu" aria-haspopup="menu">
+        ${icon("menu")}
+      </button>
+      <div class="topbar__menu-panel" role="menu">
+        ${
+          mode === "proxy"
+            ? `<button class="topbar__menu-item" data-action="logout" role="menuitem">Sortir</button>`
+            : `<span class="topbar__menu-item topbar__menu-item--muted">Options a venir</span>`
+        }
+      </div>
+    </div>
+  `;
 }
 
 function renderShell(state, view) {
-  const { route, session, mode, installPrompt, dataBusy, loadingMessage, authError } = state;
+  const { route, session, mode, apiBase, installPrompt, dataBusy, loadingMessage, authError } = state;
 
   return `
     <div class="app-shell">
       <header class="topbar">
         <div class="topbar__profile">
-          ${renderUserAvatar(session)}
+          ${renderUserAvatar(session, apiBase)}
           <h1>${session.displayName}</h1>
         </div>
-        <button class="topbar__menu" data-action="open-menu" aria-label="Ouvrir le menu">
-          ${icon("menu")}
-        </button>
+        ${renderTopbarMenu(mode)}
       </header>
 
       ${
@@ -117,16 +149,6 @@ function renderShell(state, view) {
           <span>Interventions</span>
         </button>
       </nav>
-
-      ${
-        mode === "proxy"
-          ? `
-            <button class="floating-logout" data-action="logout" aria-label="Se deconnecter">
-              Sortir
-            </button>
-          `
-          : ""
-      }
     </div>
   `;
 }

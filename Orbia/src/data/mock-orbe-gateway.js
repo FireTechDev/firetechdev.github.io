@@ -417,7 +417,10 @@ const interventionsFixture = {
       firefighterCount: 3,
       color: "#0d7c71",
       gps: { lat: 43.4019, lng: 1.7169 },
-      centers: ["VILLEFRANCHE-LGAIS"]
+      centers: ["VILLEFRANCHE-LGAIS"],
+      vehicleTypes: ["VSAV"],
+      vehicleLabels: ["VSAV 1"],
+      vehicles: [{ label: "VSAV 1", type: "VSAV", centerName: "VILLEFRANCHE-LGAIS" }]
     },
     {
       id: "mock-op-2",
@@ -429,7 +432,10 @@ const interventionsFixture = {
       firefighterCount: 4,
       color: "#d97d1b",
       gps: { lat: 43.5308, lng: 1.7554 },
-      centers: ["CARAMAN"]
+      centers: ["CARAMAN"],
+      vehicleTypes: ["CCF"],
+      vehicleLabels: ["CCF"],
+      vehicles: [{ label: "CCF", type: "CCF", centerName: "CARAMAN" }]
     },
     {
       id: "mock-op-3",
@@ -441,7 +447,13 @@ const interventionsFixture = {
       firefighterCount: 5,
       color: "#b34646",
       gps: { lat: 43.4345, lng: 1.5992 },
-      centers: ["MONTGISCARD", "VILLEFRANCHE-LGAIS"]
+      centers: ["MONTGISCARD", "VILLEFRANCHE-LGAIS"],
+      vehicleTypes: ["FPTSR", "VL"],
+      vehicleLabels: ["FPTSR", "VL"],
+      vehicles: [
+        { label: "FPTSR", type: "FPTSR", centerName: "MONTGISCARD" },
+        { label: "VL", type: "VL", centerName: "VILLEFRANCHE-LGAIS" }
+      ]
     }
   ]
 };

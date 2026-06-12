@@ -142,6 +142,11 @@ button {
   box-shadow: 0 10px 24px rgba(39, 48, 58, 0.12);
 }
 
+.topbar__menu-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
 .topbar__menu svg {
   width: 1.25rem;
   height: 1.25rem;
@@ -149,6 +154,43 @@ button {
   stroke-width: 2;
   fill: none;
   stroke-linecap: round;
+}
+
+.topbar__menu-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 12;
+  display: none;
+  min-width: 10rem;
+  padding: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 34px rgba(39, 48, 58, 0.18);
+}
+
+.topbar__menu-wrap:focus-within .topbar__menu-panel {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.topbar__menu-item {
+  width: 100%;
+  min-height: 2.45rem;
+  padding: 0.65rem 0.8rem;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(181, 72, 72, 0.1);
+  color: var(--danger);
+  font-weight: 800;
+  text-align: left;
+}
+
+.topbar__menu-item--muted {
+  display: block;
+  background: rgba(39, 48, 58, 0.06);
+  color: var(--ink-soft);
 }
 
 .topbar__actions,
@@ -1377,20 +1419,6 @@ button {
 .tabbar__item--active {
   background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
   color: #fff;
-}
-
-.floating-logout {
-  position: fixed;
-  top: max(1rem, env(safe-area-inset-top));
-  right: max(1rem, calc((100vw - min(100vw, var(--app-max-width))) / 2 + 1rem));
-  min-height: 2.5rem;
-  padding: 0.6rem 0.9rem;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(39, 48, 58, 0.88);
-  color: #fff;
-  box-shadow: 0 12px 24px rgba(39, 48, 58, 0.18);
-  z-index: 9;
 }
 
 .skeleton-panel {

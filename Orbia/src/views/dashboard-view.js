@@ -194,6 +194,14 @@ export function renderDashboardView(state) {
 
     <section class="screen-block">
       <div class="panel panel--dense">
+        <div class="panel__header panel__header--tight">
+          <div>
+            <h3>Interventions</h3>
+            <p>Suivi en cours et activite recente du centre.</p>
+          </div>
+          <span class="badge badge--soft">${center.summary.currentInterventions} en cours</span>
+        </div>
+
         <div class="compact-metrics">
           <article>
             <span>Interventions actuelles</span>
