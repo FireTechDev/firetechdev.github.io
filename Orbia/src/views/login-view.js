@@ -16,7 +16,6 @@ export function renderLoginView(state) {
             type="email"
             inputmode="email"
             autocomplete="username"
-            placeholder="prenom.nom@sdis31.fr"
             required
           />
         </label>
@@ -27,7 +26,6 @@ export function renderLoginView(state) {
             name="password"
             type="password"
             autocomplete="current-password"
-            placeholder="Votre mot de passe"
             required
           />
         </label>
