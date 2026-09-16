@@ -70,6 +70,33 @@ function renderAvailableFirefighter(firefighter) {
   `;
 }
 
+function departurePriorityValue(firefighter) {
+  const timestamp = new Date(firefighter.lastDepartureTime).getTime();
+  return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+}
+
+function nextDepartureFirefighters(firefighters) {
+  return [...firefighters]
+    .sort((left, right) => departurePriorityValue(left) - departurePriorityValue(right))
+    .slice(0, 5);
+}
+
+function renderNextDepartureFirefighter(firefighter, index) {
+  return `
+    <article class="departure-row">
+      <span class="departure-row__rank">#${index + 1}</span>
+      <div class="departure-row__identity">
+        <strong>${firefighter.grade || "SP"} ${firefighter.name}</strong>
+        <p>${firefighter.statusLabel || "Disponible"}</p>
+      </div>
+      <div class="departure-row__date">
+        <span>Dernier depart</span>
+        <strong>${firefighter.lastDepartureLabel || firefighter.detail || "Aucun depart recent"}</strong>
+      </div>
+    </article>
+  `;
+}
+
 function renderVehicleCard(armability) {
   const percent = Number.isFinite(armability.percent)
     ? armability.percent
@@ -115,6 +142,7 @@ export function renderDashboardView(state) {
 
   const center = dashboard.center;
   const firefighters = allFirefighters(center);
+  const nextDepartures = nextDepartureFirefighters(firefighters);
   const armableCount = center.armabilities.filter((item) => item.available).length;
   const firstOperation = center.currentOperations[0];
 
@@ -167,6 +195,28 @@ export function renderDashboardView(state) {
             firefighters.length
               ? firefighters.map((firefighter) => renderAvailableFirefighter(firefighter)).join("")
               : `<p class="empty-state">Aucun pompier disponible actuellement sur ce centre.</p>`
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-block">
+      <div class="panel panel--dense next-departure-panel">
+        <div class="panel__header panel__header--tight">
+          <div>
+            <h3>Prochains personnels au depart</h3>
+            <p>Trie par dernier depart, du plus ancien au plus recent.</p>
+          </div>
+          <span class="badge badge--soft">${nextDepartures.length}</span>
+        </div>
+
+        <div class="departure-list">
+          ${
+            nextDepartures.length
+              ? nextDepartures
+                  .map((firefighter, index) => renderNextDepartureFirefighter(firefighter, index))
+                  .join("")
+              : `<p class="empty-state">Aucun personnel disponible a classer pour le moment.</p>`
           }
         </div>
       </div>

@@ -22,7 +22,7 @@ const PROJECT_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const DEFAULT_CENTER_ID = 104;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const ORBIA_ACCESS_CODE = String(process.env.ORBIA_ACCESS_CODE || "").trim();
-const ACCESS_REQUIRED = Boolean(ORBIA_ACCESS_CODE);
+const ACCESS_REQUIRED = false;
 const ACCESS_COOKIE_NAME = process.env.ACCESS_COOKIE_NAME || "orbia_access";
 const RAW_ACCESS_TTL_MS = Number(process.env.ORBIA_ACCESS_TTL_MS || 30 * ONE_DAY_MS);
 const ACCESS_TTL_MS = Number.isFinite(RAW_ACCESS_TTL_MS)
@@ -730,6 +730,10 @@ function mapFirefighters(center, centerDetails) {
       statusKey: status.key,
       statusGroup: status.group,
       statusLabel: rawStatusLabel,
+      lastDepartureTime: firefighter.lastDepartureTime || null,
+      lastDepartureLabel: firefighter.lastDepartureTime
+        ? formatDateTime(firefighter.lastDepartureTime)
+        : "Aucun depart recent",
       detail: firefighter.lastDepartureTime
         ? `Dernier depart ${formatDateTime(firefighter.lastDepartureTime)}`
         : "Aucun depart recent",

@@ -825,6 +825,63 @@ button {
   white-space: nowrap;
 }
 
+.departure-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.departure-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.departure-row__rank {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(74, 140, 120, 0.14);
+  color: var(--brand-deep);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.departure-row__identity,
+.departure-row__date {
+  min-width: 0;
+}
+
+.departure-row__identity strong,
+.departure-row__date strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.departure-row__identity p,
+.departure-row__date span {
+  margin: 0.18rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+.departure-row__date {
+  text-align: right;
+}
+
+.departure-row__date strong {
+  font-size: 0.82rem;
+}
+
 .initials--compact {
   width: 2.65rem;
   height: 2.65rem;
@@ -1507,6 +1564,15 @@ button {
 
   .availability-row__status strong {
     white-space: normal;
+  }
+
+  .departure-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .departure-row__date {
+    grid-column: 2;
+    text-align: left;
   }
 
   .map-frame--immersive,
